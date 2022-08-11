@@ -203,7 +203,7 @@ static void timer_cb(TimerHandle_t xTimer)
 	CMD_t cmdBuf;
 	cmdBuf.command = CMD_TIMER;
 	cmdBuf.length = sprintf((char *)cmdBuf.payload, "Hello World %d\n", xTaskGetTickCount());
-    xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
+	xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
 }
 #endif
 
@@ -269,32 +269,32 @@ static void uart_rx_task(void* pvParameters)
 static void main_task(void* pvParameters)
 {
 	ESP_LOGI(pcTaskGetName(NULL), "Start");
-    CMD_t cmdBuf;
-    bool connected = false;
-    uint32_t sppHandle = 0;
-    while(1) {
-        xQueueReceive(xQueueMain, &cmdBuf, portMAX_DELAY);
-        ESP_LOGD(pcTaskGetName(NULL), "cmdBuf.command=%d", cmdBuf.command);
-        if (cmdBuf.command == CMD_BLUETOOTH_OPEN) {
-            connected = true;
-            sppHandle = cmdBuf.sppHandle;
-        } else if (cmdBuf.command == CMD_BLUETOOTH_CLOSE) {
-            connected = false;
-            sppHandle = 0;
-        } else if (cmdBuf.command == CMD_TIMER) {
-            if (connected) {
-                esp_spp_write(sppHandle, cmdBuf.length, cmdBuf.payload);
-            }
-        } else if (cmdBuf.command == CMD_UART_DATA) {
-            if (connected) {
-            	ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
-                esp_spp_write(sppHandle, cmdBuf.length, cmdBuf.payload);
-            }
-        } else if (cmdBuf.command == CMD_BLUETOOTH_DATA) {
-            ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
-            xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
-        }
-    }
+	CMD_t cmdBuf;
+	bool connected = false;
+	uint32_t sppHandle = 0;
+	while(1) {
+		xQueueReceive(xQueueMain, &cmdBuf, portMAX_DELAY);
+		ESP_LOGD(pcTaskGetName(NULL), "cmdBuf.command=%d", cmdBuf.command);
+		if (cmdBuf.command == CMD_BLUETOOTH_OPEN) {
+			connected = true;
+			sppHandle = cmdBuf.sppHandle;
+		} else if (cmdBuf.command == CMD_BLUETOOTH_CLOSE) {
+			connected = false;
+			sppHandle = 0;
+		} else if (cmdBuf.command == CMD_TIMER) {
+			if (connected) {
+				esp_spp_write(sppHandle, cmdBuf.length, cmdBuf.payload);
+			}
+		} else if (cmdBuf.command == CMD_UART_DATA) {
+			if (connected) {
+				ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
+				esp_spp_write(sppHandle, cmdBuf.length, cmdBuf.payload);
+			}
+		} else if (cmdBuf.command == CMD_BLUETOOTH_DATA) {
+			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
+			xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
+		}
+	}
 }
 
 void app_main(void)
@@ -370,14 +370,14 @@ void app_main(void)
 
 #if 0
 	/* create and start timer */
-    timerHandle = xTimerCreate("Trigger", 5000/portTICK_PERIOD_MS, pdTRUE, NULL, timer_cb);
-    configASSERT( timerHandle );
-    if (xTimerStart(timerHandle, 0) != pdPASS) {
-        ESP_LOGE(TAG, "Unable to start Timer");
-        while(1) { vTaskDelay(1); }
-    } else {
-        ESP_LOGI(TAG, "Success to start Timer");
-    }
+	timerHandle = xTimerCreate("Trigger", 5000/portTICK_PERIOD_MS, pdTRUE, NULL, timer_cb);
+	configASSERT( timerHandle );
+	if (xTimerStart(timerHandle, 0) != pdPASS) {
+		ESP_LOGE(TAG, "Unable to start Timer");
+		while(1) { vTaskDelay(1); }
+	} else {
+		ESP_LOGI(TAG, "Success to start Timer");
+	}
 #endif
 
 	/* uart initialize */
