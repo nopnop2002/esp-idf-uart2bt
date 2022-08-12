@@ -62,7 +62,7 @@ idf.py flash monitor
 - Install Serial Bluetooth Terminal   
 I used [this](https://play.google.com/store/apps/details?id=de.kai_morich.serial_bluetooth_terminal) app.
 
-- You can communicate to Arduino-UNO
+You can communicate to UNO using android/iphone.   
 
 ![Android-1](https://user-images.githubusercontent.com/6020549/173160559-88c98af5-bb99-41ea-bd3d-1a7343fea5ad.JPG)
 ![Android-2](https://user-images.githubusercontent.com/6020549/173160564-4790a2cf-d084-400e-9a75-89cc2655f12e.JPG)
