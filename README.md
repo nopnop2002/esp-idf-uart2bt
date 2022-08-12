@@ -7,7 +7,7 @@ UART to Bluetooth bridge for ESP-IDF.
 # How to Install
 
 - Write this sketch on Arduino Uno.   
-You can use any AtMega328 microcontroller.   
+You can use any AtMega microcontroller.   
 
 ```
 unsigned long lastMillis = 0;
@@ -60,8 +60,7 @@ idf.py flash monitor
 ```
 
 - Install Serial Bluetooth Terminal   
-I used [this](https://play.google.com/store/apps/details?id=de.kai_morich.serial_bluetooth_terminal) app.
-
+I used [this](https://play.google.com/store/apps/details?id=de.kai_morich.serial_bluetooth_terminal) app.   
 You can communicate to UNO using android/iphone.   
 
 ![Android-1](https://user-images.githubusercontent.com/6020549/173160559-88c98af5-bb99-41ea-bd3d-1a7343fea5ad.JPG)
