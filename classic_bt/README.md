@@ -3,7 +3,7 @@
 - Pair with ESP_SPP_ACCEPTOR   
 
 - Launch the app and select device  
-Menu->Device->Bluetooth Classic   
+Menu->Devices->Bluetooth Classic   
 ![Android-1](https://user-images.githubusercontent.com/6020549/173160559-88c98af5-bb99-41ea-bd3d-1a7343fea5ad.JPG)
 
 - Connect to device   
