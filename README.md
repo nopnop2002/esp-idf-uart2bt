@@ -10,7 +10,7 @@ UART to Bluetooth bridge for ESP-IDF.
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
-cd classic_bt
+cd esp-idf-uart2bt/classic_bt
 idf.py set-target esp32
 idf.py menuconfig
 idf.py flash
@@ -21,7 +21,7 @@ idf.py flash
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
-cd ble
+cd esp-idf-uart2bt/ble
 idf.py set-target {esp32/esp32s3/esp32c3}
 idf.py menuconfig
 idf.py flash
