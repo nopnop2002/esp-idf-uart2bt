@@ -7,7 +7,7 @@
 - For ESP32C3, pair with ESP32C3_SPP_SERVER   
 
 - Launch the app and select device  
-Menu->Device->Bluetooth LE   
+Menu->Devices->Bluetooth LE   
 
 - Long press the device and select the Edit menu   
 ![ble-1](https://user-images.githubusercontent.com/6020549/184459824-5cb42df0-ffa3-430d-b4c0-36e7ca36c584.JPG)
