@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Unlicense OR CC0-1.0
  */
 
+#include <stdio.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
-#include <stdio.h>
 
 #include "nvs.h"
 #include "nvs_flash.h"
@@ -73,9 +74,8 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		ESP_LOGI(TAG, "ESP_SPP_OPEN_EVT");
 		break;
 	case ESP_SPP_CLOSE_EVT:
-		ESP_LOGI(TAG, "ESP_SPP_CLOSE_EVT status:%d handle:%d close_by_remote:%d", param->close.status,
-				 param->close.handle, param->close.async);
-
+		ESP_LOGI(TAG, "ESP_SPP_CLOSE_EVT status:%d handle:%"PRIu32" close_by_remote:%d", param->close.status,
+			param->close.handle, param->close.async);
 		cmdBuf.sppHandle = param->data_ind.handle;
 		cmdBuf.command = CMD_BLUETOOTH_CLOSE;
 		xQueueSend(xQueueMain, &cmdBuf, 0);
@@ -83,8 +83,8 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		break;
 	case ESP_SPP_START_EVT:
 		if (param->start.status == ESP_SPP_SUCCESS) {
-			ESP_LOGI(TAG, "ESP_SPP_START_EVT handle:%d sec_id:%d scn:%d", param->start.handle, param->start.sec_id,
-					 param->start.scn);
+			ESP_LOGI(TAG, "ESP_SPP_START_EVT handle:%"PRIu32" sec_id:%d scn:%d", param->start.handle, param->start.sec_id,
+				param->start.scn);
 			esp_bt_dev_set_device_name(EXAMPLE_DEVICE_NAME);
 			esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
 		} else {
@@ -101,8 +101,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		 * rather than in this callback directly. Since the printing takes too much time, it may stuck the Bluetooth
 		 * stack and also have a effect on the throughput!
 		 */
-		ESP_LOGI(TAG, "ESP_SPP_DATA_IND_EVT len:%d handle:%d",
-				 param->data_ind.len, param->data_ind.handle);
+		ESP_LOGI(TAG, "ESP_SPP_DATA_IND_EVT len:%d handle:%"PRIu32, param->data_ind.len, param->data_ind.handle);
 
 
 		cmdBuf.command = CMD_BLUETOOTH_DATA;
@@ -119,8 +118,8 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		ESP_LOGI(TAG, "ESP_SPP_WRITE_EVT");
 		break;
 	case ESP_SPP_SRV_OPEN_EVT:
-		ESP_LOGI(TAG, "ESP_SPP_SRV_OPEN_EVT status:%d handle:%d, rem_bda:[%s]", param->srv_open.status,
-				 param->srv_open.handle, bda2str(param->srv_open.rem_bda, bda_str, sizeof(bda_str)));
+		ESP_LOGI(TAG, "ESP_SPP_SRV_OPEN_EVT status:%d handle:%"PRIu32" rem_bda:[%s]", param->srv_open.status,
+			param->srv_open.handle, bda2str(param->srv_open.rem_bda, bda_str, sizeof(bda_str)));
 
 		cmdBuf.sppHandle = param->data_ind.handle;
 		cmdBuf.command = CMD_BLUETOOTH_OPEN;
@@ -172,11 +171,11 @@ void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 
 #if (CONFIG_BT_SSP_ENABLED == true)
 	case ESP_BT_GAP_CFM_REQ_EVT:
-		ESP_LOGI(TAG, "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
+		ESP_LOGI(TAG, "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value:%"PRIu32, param->cfm_req.num_val);
 		esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
 		break;
 	case ESP_BT_GAP_KEY_NOTIF_EVT:
-		ESP_LOGI(TAG, "ESP_BT_GAP_KEY_NOTIF_EVT passkey:%d", param->key_notif.passkey);
+		ESP_LOGI(TAG, "ESP_BT_GAP_KEY_NOTIF_EVT passkey:%"PRIu32, param->key_notif.passkey);
 		break;
 	case ESP_BT_GAP_KEY_REQ_EVT:
 		ESP_LOGI(TAG, "ESP_BT_GAP_KEY_REQ_EVT Please enter passkey!");
