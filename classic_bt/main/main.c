@@ -339,7 +339,17 @@ void app_main(void)
 		return;
 	}
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+	esp_spp_cfg_t bt_spp_cfg = {
+		.mode = esp_spp_mode,
+		.enable_l2cap_ertm = true,
+		.tx_buffer_size = 0, /* Only used for ESP_SPP_MODE_VFS mode */
+	};
+	if ((ret = esp_spp_enhanced_init(&bt_spp_cfg)) != ESP_OK) {
+#else
 	if ((ret = esp_spp_init(esp_spp_mode)) != ESP_OK) {
+#endif
+	//if ((ret = esp_spp_init(esp_spp_mode)) != ESP_OK) {
 		ESP_LOGE(TAG, "%s spp init failed: %s\n", __func__, esp_err_to_name(ret));
 		return;
 	}
