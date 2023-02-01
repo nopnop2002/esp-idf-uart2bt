@@ -25,7 +25,7 @@ idf.py flash
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
 cd esp-idf-uart2bt/ble
-idf.py set-target {esp32/esp32s3/esp32c3}
+idf.py set-target {esp32/esp32s3/esp32c2/esp32c3}
 idf.py menuconfig
 idf.py flash
 ```
@@ -64,11 +64,11 @@ void loop() {
 
 # Connect ESP32 and AtMega328 using wire cable   
 
-|AtMega328||ESP32|
-|:-:|:-:|:-:|
-|TX|--|GPIO16|
-|RX|--|GPIO17|
-|GND|--|GND|
+|AtMega328||ESP32|ESP32S3|ESP32C2/C3|
+|:-:|:-:|:-:|:-:|:-:|
+|TX|--|GPIO16|GPIO2|GPIO1|
+|RX|--|GPIO17|GPIO1|GPIO0|
+|GND|--|GND|GND|GND|
 
 __You can change it to any pin using menuconfig.__   
 
