@@ -36,6 +36,8 @@
 #define SAMPLE_DEVICE_NAME			"ESP32_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32S3
 #define SAMPLE_DEVICE_NAME			"ESP32S3_SPP_SERVER" //The Device Name Characteristics in GAP
+#elif defined CONFIG_IDF_TARGET_ESP32C2
+#define SAMPLE_DEVICE_NAME			"ESP32C2_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32C3
 #define SAMPLE_DEVICE_NAME			"ESP32C3_SPP_SERVER" //The Device Name Characteristics in GAP
 #endif
@@ -660,7 +662,11 @@ void uart_init(void) {
 		.parity = UART_PARITY_DISABLE,
 		.stop_bits = UART_STOP_BITS_1,
 		.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+		.source_clk = UART_SCLK_DEFAULT,
+#else
 		.source_clk = UART_SCLK_APB,
+#endif
 	};
 	// We won't use a buffer for sending data.
 	uart_driver_install(UART_NUM_1, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
