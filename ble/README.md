@@ -4,6 +4,8 @@
 
 - For ESP32S3, pair with ESP32S3_SPP_SERVER   
 
+- For ESP32C2, pair with ESP32C2_SPP_SERVER   
+
 - For ESP32C3, pair with ESP32C3_SPP_SERVER   
 
 - Launch the app and select device  
