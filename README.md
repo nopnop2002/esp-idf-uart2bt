@@ -6,7 +6,8 @@ UART to Bluetooth bridge for ESP-IDF.
 ![urt2bt](https://user-images.githubusercontent.com/6020549/173161730-496501d3-163b-4e58-bb5b-f2fdfaa7854a.jpg)
 
 # Software requirements
-esp-idf v4.4/v5.0.   
+ESP-IDF V4.4/V5.0.   
+ESP-IDF V5 is required when using ESP32-C2.   
 
 
 # Using classic bluetooth
