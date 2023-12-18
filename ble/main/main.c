@@ -27,26 +27,28 @@
 
 #include "cmd.h"
 
-#define TAG "MAIN"
+static const char *TAG = "MAIN";
 
-#define SPP_PROFILE_NUM				1
-#define SPP_PROFILE_APP_IDX			0
-#define ESP_SPP_APP_ID				0x56
+#define SPP_PROFILE_NUM 1
+#define SPP_PROFILE_APP_IDX 0
+#define ESP_SPP_APP_ID 0x56
 #ifdef CONFIG_IDF_TARGET_ESP32
-#define SAMPLE_DEVICE_NAME			"ESP32_SPP_SERVER" //The Device Name Characteristics in GAP
+#define SAMPLE_DEVICE_NAME "ESP32_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32S3
-#define SAMPLE_DEVICE_NAME			"ESP32S3_SPP_SERVER" //The Device Name Characteristics in GAP
+#define SAMPLE_DEVICE_NAME "ESP32S3_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32C2
-#define SAMPLE_DEVICE_NAME			"ESP32C2_SPP_SERVER" //The Device Name Characteristics in GAP
+#define SAMPLE_DEVICE_NAME "ESP32C2_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32C3
-#define SAMPLE_DEVICE_NAME			"ESP32C3_SPP_SERVER" //The Device Name Characteristics in GAP
+#define SAMPLE_DEVICE_NAME "ESP32C3_SPP_SERVER" //The Device Name Characteristics in GAP
+#elif defined CONFIG_IDF_TARGET_ESP32C6
+#define SAMPLE_DEVICE_NAME "ESP32C6_SPP_SERVER" //The Device Name Characteristics in GAP
 #endif
-#define SPP_SVC_INST_ID				0
 
-#define SPP_DATA_MAX_LEN           (512)
-//#define SPP_CMD_MAX_LEN            (20)
-//#define SPP_STATUS_MAX_LEN         (20)
-//#define SPP_DATA_BUFF_MAX_LEN      (2*1024)
+#define SPP_SVC_INST_ID 0
+#define SPP_DATA_MAX_LEN (512)
+//#define SPP_CMD_MAX_LEN (20)
+//#define SPP_STATUS_MAX_LEN (20)
+//#define SPP_DATA_BUFF_MAX_LEN (2*1024)
 ///Attributes State Machine
 enum{
     SPP_IDX_SVC,
@@ -77,11 +79,13 @@ enum{
 /// SPP Service
 static const uint16_t spp_service_uuid = 0xABF0;
 /// Characteristic UUID
-#define ESP_GATT_UUID_SPP_DATA_RECEIVE		0xABF1
-#define ESP_GATT_UUID_SPP_DATA_NOTIFY		0xABF2
-//#define ESP_GATT_UUID_SPP_COMMAND_RECEIVE   0xABF3
-//#define ESP_GATT_UUID_SPP_COMMAND_NOTIFY	  0xABF4
-//#define ESP_GATT_UUID_SPP_HEARTBEAT		  0xABF5
+#define ESP_GATT_UUID_SPP_DATA_RECEIVE 0xABF1
+#define ESP_GATT_UUID_SPP_DATA_NOTIFY 0xABF2
+#if 0
+#define ESP_GATT_UUID_SPP_COMMAND_RECEIVE 0xABF3
+#define ESP_GATT_UUID_SPP_COMMAND_NOTIFY 0xABF4
+#define ESP_GATT_UUID_SPP_HEARTBEAT 0xABF5
+#endif
 
 static const uint8_t spp_adv_data[23] = {
 	/* Flags */
@@ -703,7 +707,7 @@ static void uart_rx_task(void* pvParameters)
 		cmdBuf.length = uart_read_bytes(UART_NUM_1, cmdBuf.payload, PAYLOAD_SIZE, 10 / portTICK_PERIOD_MS);
 		// There is some rxBuf in rx buffer
 		if (cmdBuf.length > 0) {
-			ESP_LOGD(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
+			ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
 			xQueueSend(xQueueMain, &cmdBuf, portMAX_DELAY);
 			
@@ -776,40 +780,40 @@ void app_main(void)
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 	ret = esp_bt_controller_init(&bt_cfg);
 	if (ret) {
-		ESP_LOGE(__FUNCTION__, "%s init controller failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(TAG, "%s init controller failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 	ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
 	if (ret) {
-		ESP_LOGE(__FUNCTION__, "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(TAG, "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 
-	ESP_LOGI(__FUNCTION__, "%s init bluetooth", __func__);
+	ESP_LOGI(TAG, "%s init bluetooth", __func__);
 	ret = esp_bluedroid_init();
 	if (ret) {
-		ESP_LOGE(__FUNCTION__, "%s init bluetooth failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(TAG, "%s init bluetooth failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 	ret = esp_bluedroid_enable();
 	if (ret) {
-		ESP_LOGE(__FUNCTION__, "%s enable bluetooth failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(TAG, "%s enable bluetooth failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 
 	ret = esp_ble_gatts_register_callback(gatts_event_handler);
 	if (ret){
-		ESP_LOGE(__FUNCTION__, "gatts register error, error code = %x", ret);
+		ESP_LOGE(TAG, "gatts register error, error code = %x", ret);
 		return;
 	}
 	ret = esp_ble_gap_register_callback(gap_event_handler);
 	if (ret){
-		ESP_LOGE(__FUNCTION__, "gap register error, error code = %x", ret);
+		ESP_LOGE(TAG, "gap register error, error code = %x", ret);
 		return;
 	}
 	ret = esp_ble_gatts_app_register(ESP_SPP_APP_ID);
 	if (ret){
-		ESP_LOGE(__FUNCTION__, "gatts app register error, error code = %x", ret);
+		ESP_LOGE(TAG, "gatts app register error, error code = %x", ret);
 		return;
 	}
 

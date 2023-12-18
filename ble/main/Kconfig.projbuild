@@ -6,13 +6,14 @@ menu "Application Configuration"
 		default 48 if IDF_TARGET_ESP32S3
 		default 18 if IDF_TARGET_ESP32C2
 		default 19 if IDF_TARGET_ESP32C3
+		default 30 if IDF_TARGET_ESP32C6
 
 	config UART_TX_GPIO
 		int "UART TX GPIO number"
 		range 0 GPIO_RANGE_MAX
 		default 17 if IDF_TARGET_ESP32
 		default  2 if IDF_TARGET_ESP32S3
-		default  1 if IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C2
+		default  1 # C3 and others
 		help
 			GPIO number (IOxx) to UART TX.
 			Some GPIOs are used for other purposes (flash connections, etc.).
@@ -23,7 +24,7 @@ menu "Application Configuration"
 		range 0 GPIO_RANGE_MAX
 		default 16 if IDF_TARGET_ESP32
 		default  1 if IDF_TARGET_ESP32S3
-		default  0 if IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C2
+		default  0 # C3 and others
 		help
 			GPIO number (IOxx) to UART RX.
 			Some GPIOs are used for other purposes (flash connections, etc.).

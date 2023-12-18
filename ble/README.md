@@ -8,6 +8,8 @@
 
 - For ESP32C3, pair with ESP32C3_SPP_SERVER   
 
+- For ESP32C6, pair with ESP32C6_SPP_SERVER   
+
 - Launch the app and select device  
 Menu->Devices->Bluetooth LE   
 
