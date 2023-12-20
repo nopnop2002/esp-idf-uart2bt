@@ -66,7 +66,7 @@ void loop() {
 
 # Connect ESP32 and AtMega328 using wire cable   
 
-|AtMega328||ESP32|ESP32S3|ESP32C2/C3|
+|AtMega328||ESP32|ESP32S3|ESP32C2/C3/C6|
 |:-:|:-:|:-:|:-:|:-:|
 |TX|--|GPIO16|GPIO2|GPIO1|
 |RX|--|GPIO17|GPIO1|GPIO0|
