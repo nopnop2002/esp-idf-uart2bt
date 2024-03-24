@@ -1,6 +1,7 @@
 # For classic bluetooth
 
 - Pair with ESP_SPP_ACCEPTOR   
+ If you are asked to enter the Pin Code, the Pin Code is "1234".   
 
 - Launch the app and select device  
 Menu->Devices->Bluetooth Classic   
