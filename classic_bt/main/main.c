@@ -25,10 +25,10 @@
 #include "esp_spp_api.h"
 #include "driver/uart.h"
 
-
 #include "cmd.h"
 
-#define TAG "MAIN"
+static const char *TAG = "MAIN";
+
 #define SPP_SERVER_NAME "SPP_SERVER"
 #define EXAMPLE_DEVICE_NAME "ESP_SPP_ACCEPTOR"
 
@@ -78,8 +78,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 			param->close.handle, param->close.async);
 		cmdBuf.sppHandle = param->data_ind.handle;
 		cmdBuf.command = CMD_BLUETOOTH_CLOSE;
-		xQueueSend(xQueueMain, &cmdBuf, 0);
-
+		xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
 		break;
 	case ESP_SPP_START_EVT:
 		if (param->start.status == ESP_SPP_SUCCESS) {
@@ -102,14 +101,11 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		 * stack and also have a effect on the throughput!
 		 */
 		ESP_LOGI(TAG, "ESP_SPP_DATA_IND_EVT len:%d handle:%"PRIu32, param->data_ind.len, param->data_ind.handle);
-
-
 		cmdBuf.command = CMD_BLUETOOTH_DATA;
 		strcpy((char *)cmdBuf.payload, (char *)param->data_ind.data);
 		cmdBuf.payload[param->data_ind.len] = 0;
 		cmdBuf.length = param->data_ind.len;
-		xQueueSend(xQueueMain, &cmdBuf, 0);
-
+		xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
 		break;
 	case ESP_SPP_CONG_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_CONG_EVT");
@@ -123,8 +119,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 
 		cmdBuf.sppHandle = param->data_ind.handle;
 		cmdBuf.command = CMD_BLUETOOTH_OPEN;
-		xQueueSend(xQueueMain, &cmdBuf, 0);
-
+		xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
 		break;
 	case ESP_SPP_SRV_STOP_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_SRV_STOP_EVT");
@@ -195,7 +190,7 @@ void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 	return;
 }
 
-// Timer call back
+// Timer call back for debug
 #if 0
 static void timer_cb(TimerHandle_t xTimer)
 {
@@ -302,6 +297,7 @@ static void main_task(void* pvParameters)
 
 void app_main(void)
 {
+	// Initialize NVS.
 	char bda_str[18] = {0};
 	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -323,10 +319,21 @@ void app_main(void)
 		return;
 	}
 
+#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0))
+	esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
+#if (CONFIG_BT_SSP_ENABLED == true)
+	bluedroid_cfg.ssp_en = false;
+#endif
+	if ((ret = esp_bluedroid_init_with_cfg(&bluedroid_cfg)) != ESP_OK) {
+		ESP_LOGE(TAG, "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(ret));
+		return;
+	}
+#else
 	if ((ret = esp_bluedroid_init()) != ESP_OK) {
 		ESP_LOGE(TAG, "%s initialize bluedroid failed: %s\n", __func__, esp_err_to_name(ret));
 		return;
 	}
+#endif
 
 	if ((ret = esp_bluedroid_enable()) != ESP_OK) {
 		ESP_LOGE(TAG, "%s enable bluedroid failed: %s\n", __func__, esp_err_to_name(ret));
@@ -375,12 +382,6 @@ void app_main(void)
 
 	ESP_LOGI(TAG, "Own address:[%s]", bda2str((uint8_t *)esp_bt_dev_get_address(), bda_str, sizeof(bda_str)));
 
-	/* Create Queue */
-	xQueueMain = xQueueCreate( 10, sizeof(CMD_t) );
-	configASSERT( xQueueMain );
-	xQueueUart = xQueueCreate( 10, sizeof(CMD_t) );
-	configASSERT( xQueueUart );
-
 #if 0
 	/* create and start timer */
 	timerHandle = xTimerCreate("Trigger", 5000/portTICK_PERIOD_MS, pdTRUE, NULL, timer_cb);
@@ -393,10 +394,16 @@ void app_main(void)
 	}
 #endif
 
+	/* Create Queue */
+	xQueueMain = xQueueCreate( 10, sizeof(CMD_t) );
+	configASSERT( xQueueMain );
+	xQueueUart = xQueueCreate( 10, sizeof(CMD_t) );
+	configASSERT( xQueueUart );
+
 	/* uart initialize */
 	uart_init();
 
-	/* Start uart task */
+	/* Start tasks */
 	xTaskCreate(uart_tx_task, "uart_tx", 1024*4, NULL, 2, NULL);
 	xTaskCreate(uart_rx_task, "uart_rx", 1024*4, NULL, 2, NULL);
 	xTaskCreate(main_task, "main", 1024*4, NULL, 2, NULL);
