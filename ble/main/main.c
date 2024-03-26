@@ -51,29 +51,29 @@ static const char *TAG = "MAIN";
 //#define SPP_DATA_BUFF_MAX_LEN (2*1024)
 ///Attributes State Machine
 enum{
-    SPP_IDX_SVC,
+	SPP_IDX_SVC,
 
-    SPP_IDX_SPP_DATA_RECV_CHAR,
-    SPP_IDX_SPP_DATA_RECV_VAL,
+	SPP_IDX_SPP_DATA_RECV_CHAR,
+	SPP_IDX_SPP_DATA_RECV_VAL,
 
-    SPP_IDX_SPP_DATA_NOTIFY_CHAR,
-    SPP_IDX_SPP_DATA_NOTIFY_VAL,
-    SPP_IDX_SPP_DATA_NOTIFY_CFG,
+	SPP_IDX_SPP_DATA_NOTIFY_CHAR,
+	SPP_IDX_SPP_DATA_NOTIFY_VAL,
+	SPP_IDX_SPP_DATA_NOTIFY_CFG,
 
 #if 0
-    SPP_IDX_SPP_COMMAND_CHAR,
-    SPP_IDX_SPP_COMMAND_VAL,
+	SPP_IDX_SPP_COMMAND_CHAR,
+	SPP_IDX_SPP_COMMAND_VAL,
 
-    SPP_IDX_SPP_STATUS_CHAR,
-    SPP_IDX_SPP_STATUS_VAL,
-    SPP_IDX_SPP_STATUS_CFG,
+	SPP_IDX_SPP_STATUS_CHAR,
+	SPP_IDX_SPP_STATUS_VAL,
+	SPP_IDX_SPP_STATUS_CFG,
 
-    SPP_IDX_SPP_HEARTBEAT_CHAR,
-    SPP_IDX_SPP_HEARTBEAT_VAL,
-    SPP_IDX_SPP_HEARTBEAT_CFG,
+	SPP_IDX_SPP_HEARTBEAT_CHAR,
+	SPP_IDX_SPP_HEARTBEAT_VAL,
+	SPP_IDX_SPP_HEARTBEAT_CFG,
 #endif
 
-    SPP_IDX_NB,
+	SPP_IDX_NB,
 };
 
 /// SPP Service
@@ -384,9 +384,8 @@ static void show_bonded_devices(void)
 
 	esp_ble_bond_dev_t *dev_list = (esp_ble_bond_dev_t *)malloc(sizeof(esp_ble_bond_dev_t) * dev_num);
 	esp_ble_get_bond_device_list(&dev_num, dev_list);
-	ESP_LOGI(__FUNCTION__, "Bonded devices number : %d\n", dev_num);
-
-	ESP_LOGI(__FUNCTION__, "Bonded devices list : %d\n", dev_num);
+	ESP_LOGI(__FUNCTION__, "Bonded devices number : %d", dev_num);
+	ESP_LOGI(__FUNCTION__, "Bonded devices list : %d", dev_num);
 	for (int i = 0; i < dev_num; i++) {
 		esp_log_buffer_hex(__FUNCTION__, (void *)dev_list[i].bd_addr, sizeof(esp_bd_addr_t));
 	}
@@ -485,8 +484,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 		show_bonded_devices();
 
 		cmdBuf.command = CMD_BLUETOOTH_AUTH;
-		xQueueSend(xQueueMain, &cmdBuf, 0);
-
+		xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
 		break;
 	}
 	case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT: {
@@ -541,8 +539,12 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 		case ESP_GATTS_READ_EVT:
 			break;
 		case ESP_GATTS_WRITE_EVT:
-			ESP_LOGI(__FUNCTION__, "ESP_GATTS_WRITE_EVT, write value:");
+			ESP_LOGI(__FUNCTION__, "ESP_GATTS_WRITE_EVT");
 			esp_log_buffer_hex(__FUNCTION__, param->write.value, param->write.len);
+			cmdBuf.command = CMD_BLUETOOTH_DATA;
+			cmdBuf.length = param->write.len;
+			memcpy(cmdBuf.payload, (char *)param->write.value, param->write.len);
+			xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
 			break;
 		case ESP_GATTS_EXEC_WRITE_EVT:
 			break;
@@ -562,25 +564,15 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 			ESP_LOGI(__FUNCTION__, "ESP_GATTS_CONNECT_EVT");
 			/* start security connect with peer device when receive the connect event sent by the master */
 			esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
-
-
 			cmdBuf.command = CMD_BLUETOOTH_CONNECT;
 			cmdBuf.spp_conn_id = p_data->connect.conn_id;
 			cmdBuf.spp_gatts_if = gatts_if;
-			xQueueSend(xQueueMain, &cmdBuf, 0);
-
-
-			//spp_conn_id = p_data->connect.conn_id;
-			//spp_gatts_if = gatts_if;
-			//memcpy(&spp_remote_bda,&p_data->connect.remote_bda,sizeof(esp_bd_addr_t));
-			//uint16_t cmd = 0;
-			//xQueueSend(xQueueMain,&cmd,10/portTICK_PERIOD_MS);
-
+			xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
 			break;
 		case ESP_GATTS_DISCONNECT_EVT:
 			ESP_LOGI(__FUNCTION__, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
 			cmdBuf.command = CMD_BLUETOOTH_DISCONNECT;
-			xQueueSend(xQueueMain, &cmdBuf, 0);
+			xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
 			/* start advertising again when missing the connect */
 			esp_ble_gap_start_advertising(&spp_adv_params);
 			break;
@@ -594,23 +586,19 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 			break;
 		case ESP_GATTS_CONGEST_EVT:
 			break;
-		case ESP_GATTS_CREAT_ATTR_TAB_EVT: {
-			ESP_LOGI(__FUNCTION__, "The number handle = 0x%x",param->add_attr_tab.num_handle);
-			if (param->create.status == ESP_GATT_OK){
-				if(param->add_attr_tab.num_handle == SPP_IDX_NB) {
-					memcpy(spp_handle_table, param->add_attr_tab.handles,
-					sizeof(spp_handle_table));
-					esp_ble_gatts_start_service(spp_handle_table[SPP_IDX_SVC]);
-				}else{
-					ESP_LOGE(__FUNCTION__, "Create attribute table abnormally, num_handle (%d) doesn't equal to SPP_IDX_NB(%d)",
-						 param->add_attr_tab.num_handle, SPP_IDX_NB);
-				}
-			}else{
-				ESP_LOGE(__FUNCTION__, " Create attribute table failed, error code = %x", param->create.status);
+		case ESP_GATTS_CREAT_ATTR_TAB_EVT:
+			ESP_LOGI(__FUNCTION__, "The number handle =%x",param->add_attr_tab.num_handle);
+			if (param->add_attr_tab.status != ESP_GATT_OK){
+				ESP_LOGE(__FUNCTION__, "Create attribute table failed, error code=0x%x", param->add_attr_tab.status);
 			}
-		break;
-	}
-
+			else if (param->add_attr_tab.num_handle != SPP_IDX_NB){
+				ESP_LOGE(__FUNCTION__, "Create attribute table abnormally, num_handle (%d) doesn't equal to HRS_IDX_NB(%d)", param->add_attr_tab.num_handle, SPP_IDX_NB);
+			}
+			else {
+				memcpy(spp_handle_table, param->add_attr_tab.handles, sizeof(spp_handle_table));
+				esp_ble_gatts_start_service(spp_handle_table[SPP_IDX_SVC]);
+			}
+			break;
 		default:
 		   break;
 	}
@@ -765,10 +753,8 @@ void main_task(void * arg)
 
 void app_main(void)
 {
-	esp_err_t ret;
-
 	// Initialize NVS.
-	ret = nvs_flash_init();
+	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
 		ESP_ERROR_CHECK(nvs_flash_erase());
 		ret = nvs_flash_init();
@@ -778,41 +764,45 @@ void app_main(void)
 	ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-	ret = esp_bt_controller_init(&bt_cfg);
-	if (ret) {
+	if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK) {
 		ESP_LOGE(TAG, "%s init controller failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
-	ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-	if (ret) {
+
+	if ((ret = esp_bt_controller_enable(ESP_BT_MODE_BLE)) != ESP_OK) {
 		ESP_LOGE(TAG, "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 
-	ESP_LOGI(TAG, "%s init bluetooth", __func__);
-	ret = esp_bluedroid_init();
-	if (ret) {
-		ESP_LOGE(TAG, "%s init bluetooth failed: %s", __func__, esp_err_to_name(ret));
+#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0))
+	esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
+	if ((ret = esp_bluedroid_init_with_cfg(&bluedroid_cfg)) != ESP_OK) {
+		ESP_LOGE(TAG, "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
-	ret = esp_bluedroid_enable();
-	if (ret) {
+#else
+	if ((ret = esp_bluedroid_init()) != ESP_OK) {
+		ESP_LOGE(TAG, "%s init bluedroid failed: %s", __func__, esp_err_to_name(ret));
+		return;
+	}
+#endif
+
+	if ((ret = esp_bluedroid_enable()) != ESP_OK) {
 		ESP_LOGE(TAG, "%s enable bluetooth failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 
-	ret = esp_ble_gatts_register_callback(gatts_event_handler);
-	if (ret){
+	if ((ret = esp_ble_gatts_register_callback(gatts_event_handler)) != ESP_OK) {
 		ESP_LOGE(TAG, "gatts register error, error code = %x", ret);
 		return;
 	}
-	ret = esp_ble_gap_register_callback(gap_event_handler);
-	if (ret){
+
+	if ((ret = esp_ble_gap_register_callback(gap_event_handler)) != ESP_OK) {
 		ESP_LOGE(TAG, "gap register error, error code = %x", ret);
 		return;
 	}
-	ret = esp_ble_gatts_app_register(ESP_SPP_APP_ID);
-	if (ret){
+
+	if ((ret = esp_ble_gatts_app_register(ESP_SPP_APP_ID)) != ESP_OK) {
 		ESP_LOGE(TAG, "gatts app register error, error code = %x", ret);
 		return;
 	}
@@ -859,7 +849,6 @@ void app_main(void)
 	}
 #endif
 
-
 	/* Create Queue */
 	xQueueMain = xQueueCreate(10, sizeof(CMD_t));
 	configASSERT( xQueueMain );
@@ -869,7 +858,7 @@ void app_main(void)
 	/* uart initialize */
 	uart_init();
 
-	/* Start uart task */
+	/* Start tasks */
 	xTaskCreate(uart_tx_task, "uart_tx", 1024*4, NULL, 2, NULL);
 	xTaskCreate(uart_rx_task, "uart_rx", 1024*4, NULL, 2, NULL);
 	xTaskCreate(main_task, "main", 1024*4, NULL, 10, NULL);
