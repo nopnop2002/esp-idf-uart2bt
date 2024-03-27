@@ -11,7 +11,7 @@ ESP-IDF V5.0 is required when using ESP32-C2.
 ESP-IDF V5.1 is required when using ESP32-C6.   
 
 
-# Using classic bluetooth
+# Using classic bluetooth (ESP32 only)
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
