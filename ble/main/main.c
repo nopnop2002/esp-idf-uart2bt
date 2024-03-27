@@ -33,22 +33,20 @@ static const char *TAG = "MAIN";
 #define SPP_PROFILE_APP_IDX 0
 #define ESP_SPP_APP_ID 0x56
 #ifdef CONFIG_IDF_TARGET_ESP32
-#define SAMPLE_DEVICE_NAME "ESP32_SPP_SERVER" //The Device Name Characteristics in GAP
+#define DEVICE_NAME "ESP32_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32S3
-#define SAMPLE_DEVICE_NAME "ESP32S3_SPP_SERVER" //The Device Name Characteristics in GAP
+#define DEVICE_NAME "ESP32S3_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32C2
-#define SAMPLE_DEVICE_NAME "ESP32C2_SPP_SERVER" //The Device Name Characteristics in GAP
+#define DEVICE_NAME "ESP32C2_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32C3
-#define SAMPLE_DEVICE_NAME "ESP32C3_SPP_SERVER" //The Device Name Characteristics in GAP
+#define DEVICE_NAME "ESP32C3_SPP_SERVER" //The Device Name Characteristics in GAP
 #elif defined CONFIG_IDF_TARGET_ESP32C6
-#define SAMPLE_DEVICE_NAME "ESP32C6_SPP_SERVER" //The Device Name Characteristics in GAP
+#define DEVICE_NAME "ESP32C6_SPP_SERVER" //The Device Name Characteristics in GAP
 #endif
 
 #define SPP_SVC_INST_ID 0
 #define SPP_DATA_MAX_LEN (512)
-//#define SPP_CMD_MAX_LEN (20)
-//#define SPP_STATUS_MAX_LEN (20)
-//#define SPP_DATA_BUFF_MAX_LEN (2*1024)
+
 ///Attributes State Machine
 enum{
 	SPP_IDX_SVC,
@@ -60,19 +58,6 @@ enum{
 	SPP_IDX_SPP_DATA_NOTIFY_VAL,
 	SPP_IDX_SPP_DATA_NOTIFY_CFG,
 
-#if 0
-	SPP_IDX_SPP_COMMAND_CHAR,
-	SPP_IDX_SPP_COMMAND_VAL,
-
-	SPP_IDX_SPP_STATUS_CHAR,
-	SPP_IDX_SPP_STATUS_VAL,
-	SPP_IDX_SPP_STATUS_CFG,
-
-	SPP_IDX_SPP_HEARTBEAT_CHAR,
-	SPP_IDX_SPP_HEARTBEAT_VAL,
-	SPP_IDX_SPP_HEARTBEAT_CFG,
-#endif
-
 	SPP_IDX_NB,
 };
 
@@ -81,11 +66,6 @@ static const uint16_t spp_service_uuid = 0xABF0;
 /// Characteristic UUID
 #define ESP_GATT_UUID_SPP_DATA_RECEIVE 0xABF1
 #define ESP_GATT_UUID_SPP_DATA_NOTIFY 0xABF2
-#if 0
-#define ESP_GATT_UUID_SPP_COMMAND_RECEIVE 0xABF3
-#define ESP_GATT_UUID_SPP_COMMAND_NOTIFY 0xABF4
-#define ESP_GATT_UUID_SPP_HEARTBEAT 0xABF5
-#endif
 
 static const uint8_t spp_adv_data[23] = {
 	/* Flags */
@@ -95,10 +75,6 @@ static const uint8_t spp_adv_data[23] = {
 	/* Complete Local Name in advertising */
 	0x0F,0x09, 'E', 'S', 'P', '_', 'S', 'P', 'P', '_', 'S', 'E', 'R','V', 'E', 'R'
 };
-
-//static uint16_t spp_conn_id = 0xffff;
-//static esp_gatt_if_t spp_gatts_if = 0xff;
-//static esp_bd_addr_t spp_remote_bda = {0x0,};
 
 QueueHandle_t xQueueMain = NULL;
 QueueHandle_t xQueueUart;
@@ -114,10 +90,8 @@ static esp_ble_adv_params_t spp_adv_params = {
 	.adv_filter_policy	= ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
 };
 
-//#define GATTS_DEMO_CHAR_VAL_LEN_MAX				0x40
-
-#define ADV_CONFIG_FLAG							  (1 << 0)
-#define SCAN_RSP_CONFIG_FLAG					  (1 << 1)
+#define ADV_CONFIG_FLAG (1 << 0)
+#define SCAN_RSP_CONFIG_FLAG (1 << 1)
 
 static uint8_t adv_config_done = 0;
 
@@ -168,8 +142,7 @@ struct gatts_profile_inst {
 	esp_bt_uuid_t descr_uuid;
 };
 
-static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
-										esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
+static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
 /* One gatt-based profile one app_id and one gatts_if, this array will store the gatts_if returned by ESP_GATTS_REG_EVT */
 static struct gatts_profile_inst spp_profile_tab[SPP_PROFILE_NUM] = {
@@ -192,10 +165,6 @@ static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_C
 static const uint8_t char_prop_read_notify = ESP_GATT_CHAR_PROP_BIT_READ|ESP_GATT_CHAR_PROP_BIT_NOTIFY;
 static const uint8_t char_prop_read_write = ESP_GATT_CHAR_PROP_BIT_WRITE_NR|ESP_GATT_CHAR_PROP_BIT_READ;
 
-#if 0
-static const uint8_t char_prop_read_write_notify = ESP_GATT_CHAR_PROP_BIT_READ|ESP_GATT_CHAR_PROP_BIT_WRITE_NR|ESP_GATT_CHAR_PROP_BIT_NOTIFY;
-#endif
-
 ///SPP Service - data receive characteristic, read&write without response
 static const uint16_t spp_data_receive_uuid = ESP_GATT_UUID_SPP_DATA_RECEIVE;
 static const uint8_t  spp_data_receive_val[20] = {0x00};
@@ -205,101 +174,38 @@ static const uint16_t spp_data_notify_uuid = ESP_GATT_UUID_SPP_DATA_NOTIFY;
 static const uint8_t  spp_data_notify_val[20] = {0x00};
 static const uint8_t  spp_data_notify_ccc[2] = {0x00, 0x00};
 
-#if 0
-///SPP Service - command characteristic, read&write without response
-static const uint16_t spp_command_uuid = ESP_GATT_UUID_SPP_COMMAND_RECEIVE;
-static const uint8_t  spp_command_val[10] = {0x00};
-#endif
-
-#if 0
-///SPP Service - status characteristic, notify&read
-static const uint16_t spp_status_uuid = ESP_GATT_UUID_SPP_COMMAND_NOTIFY;
-static const uint8_t  spp_status_val[10] = {0x00};
-static const uint8_t  spp_status_ccc[2] = {0x00, 0x00};
-#endif
-
-#if 0
-///SPP Server - Heart beat characteristic, notify&write&read
-static const uint16_t spp_heart_beat_uuid = ESP_GATT_UUID_SPP_HEARTBEAT;
-static const uint8_t  spp_heart_beat_val[2] = {0x00, 0x00};
-static const uint8_t  spp_heart_beat_ccc[2] = {0x00, 0x00};
-#endif
-
 /// Full HRS Database Description - Used to add attributes into the database
 static const esp_gatts_attr_db_t spp_gatt_db[SPP_IDX_NB] =
 {
 	//SPP -  Service Declaration
-	[SPP_IDX_SVC]						=
+	[SPP_IDX_SVC] =
 	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&primary_service_uuid, ESP_GATT_PERM_READ,
 	sizeof(spp_service_uuid), sizeof(spp_service_uuid), (uint8_t *)&spp_service_uuid}},
 
 	//SPP -  data receive characteristic Declaration
-	[SPP_IDX_SPP_DATA_RECV_CHAR]			=
+	[SPP_IDX_SPP_DATA_RECV_CHAR] =
 	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
 	CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_write}},
 
 	//SPP -  data receive characteristic Value
-	[SPP_IDX_SPP_DATA_RECV_VAL]					=
+	[SPP_IDX_SPP_DATA_RECV_VAL] =
 	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&spp_data_receive_uuid, ESP_GATT_PERM_READ|ESP_GATT_PERM_WRITE,
 	SPP_DATA_MAX_LEN,sizeof(spp_data_receive_val), (uint8_t *)spp_data_receive_val}},
 
 	//SPP -  data notify characteristic Declaration
-	[SPP_IDX_SPP_DATA_NOTIFY_CHAR]	=
+	[SPP_IDX_SPP_DATA_NOTIFY_CHAR] =
 	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
 	CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_notify}},
 
 	//SPP -  data notify characteristic Value
-	[SPP_IDX_SPP_DATA_NOTIFY_VAL]	=
+	[SPP_IDX_SPP_DATA_NOTIFY_VAL] =
 	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&spp_data_notify_uuid, ESP_GATT_PERM_READ,
 	SPP_DATA_MAX_LEN, sizeof(spp_data_notify_val), (uint8_t *)spp_data_notify_val}},
 
 	//SPP -  data notify characteristic - Client Characteristic Configuration Descriptor
-	[SPP_IDX_SPP_DATA_NOTIFY_CFG]		  =
+	[SPP_IDX_SPP_DATA_NOTIFY_CFG] =
 	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_client_config_uuid, ESP_GATT_PERM_READ|ESP_GATT_PERM_WRITE,
 	sizeof(uint16_t),sizeof(spp_data_notify_ccc), (uint8_t *)spp_data_notify_ccc}},
-
-#if 0
-	//SPP -  command characteristic Declaration
-	[SPP_IDX_SPP_COMMAND_CHAR]			  =
-	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
-	CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_write}},
-
-	//SPP -  command characteristic Value
-	[SPP_IDX_SPP_COMMAND_VAL]				  =
-	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&spp_command_uuid, ESP_GATT_PERM_READ|ESP_GATT_PERM_WRITE,
-	SPP_CMD_MAX_LEN,sizeof(spp_command_val), (uint8_t *)spp_command_val}},
-
-	//SPP -  status characteristic Declaration
-	[SPP_IDX_SPP_STATUS_CHAR]			 =
-	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
-	CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_notify}},
-
-	//SPP -  status characteristic Value
-	[SPP_IDX_SPP_STATUS_VAL]				 =
-	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&spp_status_uuid, ESP_GATT_PERM_READ,
-	SPP_STATUS_MAX_LEN,sizeof(spp_status_val), (uint8_t *)spp_status_val}},
-
-	//SPP -  status characteristic - Client Characteristic Configuration Descriptor
-	[SPP_IDX_SPP_STATUS_CFG]		 =
-	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_client_config_uuid, ESP_GATT_PERM_READ|ESP_GATT_PERM_WRITE,
-	sizeof(uint16_t),sizeof(spp_status_ccc), (uint8_t *)spp_status_ccc}},
-
-	//SPP -  Heart beat characteristic Declaration
-	[SPP_IDX_SPP_HEARTBEAT_CHAR]  =
-	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
-	CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_write_notify}},
-
-	//SPP -  Heart beat characteristic Value
-	[SPP_IDX_SPP_HEARTBEAT_VAL]   =
-	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&spp_heart_beat_uuid, ESP_GATT_PERM_READ|ESP_GATT_PERM_WRITE,
-	sizeof(spp_heart_beat_val), sizeof(spp_heart_beat_val), (uint8_t *)spp_heart_beat_val}},
-
-	//SPP -  Heart beat characteristic - Client Characteristic Configuration Descriptor
-	[SPP_IDX_SPP_HEARTBEAT_CFG]			=
-	{{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_client_config_uuid, ESP_GATT_PERM_READ|ESP_GATT_PERM_WRITE,
-	//sizeof(uint16_t),sizeof(spp_data_notify_ccc), (uint8_t *)spp_heart_beat_ccc}},
-	sizeof(uint16_t),sizeof(spp_heart_beat_ccc), (uint8_t *)spp_heart_beat_ccc}},
-#endif
 };
 
 static char *esp_key_type_to_str(esp_ble_key_type_t key_type)
@@ -393,6 +299,7 @@ static void show_bonded_devices(void)
 	free(dev_list);
 }
 
+#if 0
 static void __attribute__((unused)) remove_all_bonded_devices(void)
 {
 	int dev_num = esp_ble_get_bond_device_num();
@@ -405,6 +312,7 @@ static void __attribute__((unused)) remove_all_bonded_devices(void)
 
 	free(dev_list);
 }
+#endif
 
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
@@ -521,6 +429,19 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 	}
 }
 
+static uint8_t find_char_and_desr_index(uint16_t handle)
+{
+	uint8_t error = 0xff;
+
+	for(int i = 0; i < SPP_IDX_NB ; i++){
+		if(handle == spp_handle_table[i]){
+			return i;
+		}
+	}
+
+	return error;
+}
+
 static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 										esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
@@ -530,7 +451,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 	ESP_LOGV(__FUNCTION__, "event = %x\n",event);
 	switch (event) {
 		case ESP_GATTS_REG_EVT:
-			esp_ble_gap_set_device_name(SAMPLE_DEVICE_NAME);
+			esp_ble_gap_set_device_name(DEVICE_NAME);
 			//generate a resolvable random address
 			esp_ble_gap_config_local_privacy(true);
 			esp_ble_gap_config_adv_data_raw((uint8_t *)spp_adv_data, sizeof(spp_adv_data));
@@ -540,11 +461,16 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 			break;
 		case ESP_GATTS_WRITE_EVT:
 			ESP_LOGI(__FUNCTION__, "ESP_GATTS_WRITE_EVT");
-			esp_log_buffer_hex(__FUNCTION__, param->write.value, param->write.len);
-			cmdBuf.command = CMD_BLUETOOTH_DATA;
-			cmdBuf.length = param->write.len;
-			memcpy(cmdBuf.payload, (char *)param->write.value, param->write.len);
-			xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
+			uint8_t res = find_char_and_desr_index(p_data->write.handle);
+			ESP_LOGI(__FUNCTION__, "find_char_and_desr_index=%d", res);
+			if (res == SPP_IDX_SPP_DATA_RECV_VAL) {
+				esp_log_buffer_hex(__FUNCTION__, param->write.value, param->write.len);
+				cmdBuf.command = CMD_BLUETOOTH_DATA;
+				cmdBuf.length = param->write.len;
+				if (cmdBuf.length > PAYLOAD_SIZE) cmdBuf.length = PAYLOAD_SIZE;
+				memcpy(cmdBuf.payload, (char *)param->write.value, cmdBuf.length);
+				xQueueSendFromISR(xQueueMain, &cmdBuf, NULL);
+			}
 			break;
 		case ESP_GATTS_EXEC_WRITE_EVT:
 			break;
@@ -675,8 +601,8 @@ static void uart_tx_task(void* pvParameters)
 
 	while(1) {
 		xQueueReceive(xQueueUart, &cmdBuf, portMAX_DELAY);
-		ESP_LOGD(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
-		ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
+		ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
+		ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
 		int txBytes = uart_write_bytes(UART_NUM_1, cmdBuf.payload, cmdBuf.length);
 		ESP_LOGI(pcTaskGetName(NULL), "txBytes=%d", txBytes);
 	} // end while
@@ -695,7 +621,7 @@ static void uart_rx_task(void* pvParameters)
 		cmdBuf.length = uart_read_bytes(UART_NUM_1, cmdBuf.payload, PAYLOAD_SIZE, 10 / portTICK_PERIOD_MS);
 		// There is some rxBuf in rx buffer
 		if (cmdBuf.length > 0) {
-			ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
+			ESP_LOGD(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
 			xQueueSend(xQueueMain, &cmdBuf, portMAX_DELAY);
 			
@@ -742,7 +668,7 @@ void main_task(void * arg)
 				esp_ble_gatts_send_indicate(spp_gatts_if, spp_conn_id, spp_handle_table[SPP_IDX_SPP_DATA_NOTIFY_VAL], cmdBuf.length, cmdBuf.payload, false);
 			}
 		} else if (cmdBuf.command == CMD_BLUETOOTH_DATA) {
-			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
+			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
 			xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
 		}
 	} // end while
