@@ -116,7 +116,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		break;
 	default:
 		break;
-	}
+	} // end switch
 }
 
 void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
@@ -124,55 +124,52 @@ void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 	char bda_str[18] = {0};
 
 	switch (event) {
-		case ESP_BT_GAP_AUTH_CMPL_EVT:{
-			if (param->auth_cmpl.stat == ESP_BT_STATUS_SUCCESS) {
-				ESP_LOGI(TAG, "authentication success: %s bda:[%s]", param->auth_cmpl.device_name,
-						 bda2str(param->auth_cmpl.bda, bda_str, sizeof(bda_str)));
-			} else {
-				ESP_LOGE(TAG, "authentication failed, status:%d", param->auth_cmpl.stat);
-			}
-			break;
+	case ESP_BT_GAP_AUTH_CMPL_EVT:
+		if (param->auth_cmpl.stat == ESP_BT_STATUS_SUCCESS) {
+			ESP_LOGI(TAG, "authentication success: %s bda:[%s]", param->auth_cmpl.device_name,
+				 bda2str(param->auth_cmpl.bda, bda_str, sizeof(bda_str)));
+		} else {
+			ESP_LOGE(TAG, "authentication failed, status:%d", param->auth_cmpl.stat);
 		}
-		case ESP_BT_GAP_PIN_REQ_EVT:{
-			ESP_LOGI(TAG, "ESP_BT_GAP_PIN_REQ_EVT min_16_digit:%d", param->pin_req.min_16_digit);
-			if (param->pin_req.min_16_digit) {
-				ESP_LOGI(TAG, "Input pin code: 0000 0000 0000 0000");
-				esp_bt_pin_code_t pin_code = {0};
-				esp_bt_gap_pin_reply(param->pin_req.bda, true, 16, pin_code);
-			} else {
-				ESP_LOGI(TAG, "Input pin code: 1234");
-				esp_bt_pin_code_t pin_code;
-				pin_code[0] = '1';
-				pin_code[1] = '2';
-				pin_code[2] = '3';
-				pin_code[3] = '4';
-				esp_bt_gap_pin_reply(param->pin_req.bda, true, 4, pin_code);
-			}
-			break;
+		break;
+	case ESP_BT_GAP_PIN_REQ_EVT:
+		ESP_LOGI(TAG, "ESP_BT_GAP_PIN_REQ_EVT min_16_digit:%d", param->pin_req.min_16_digit);
+		if (param->pin_req.min_16_digit) {
+			ESP_LOGI(TAG, "Input pin code: 0000 0000 0000 0000");
+			esp_bt_pin_code_t pin_code = {0};
+			esp_bt_gap_pin_reply(param->pin_req.bda, true, 16, pin_code);
+		} else {
+			ESP_LOGI(TAG, "Input pin code: 1234");
+			esp_bt_pin_code_t pin_code;
+			pin_code[0] = '1';
+			pin_code[1] = '2';
+			pin_code[2] = '3';
+			pin_code[3] = '4';
+			esp_bt_gap_pin_reply(param->pin_req.bda, true, 4, pin_code);
 		}
+		break;
 
 #if (CONFIG_BT_SSP_ENABLED == true)
-		case ESP_BT_GAP_CFM_REQ_EVT:
-			ESP_LOGI(TAG, "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value:%"PRIu32, param->cfm_req.num_val);
-			esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
-			break;
-		case ESP_BT_GAP_KEY_NOTIF_EVT:
-			ESP_LOGI(TAG, "ESP_BT_GAP_KEY_NOTIF_EVT passkey:%"PRIu32, param->key_notif.passkey);
-			break;
-		case ESP_BT_GAP_KEY_REQ_EVT:
-			ESP_LOGI(TAG, "ESP_BT_GAP_KEY_REQ_EVT Please enter passkey!");
-			break;
+	case ESP_BT_GAP_CFM_REQ_EVT:
+		ESP_LOGI(TAG, "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value:%"PRIu32, param->cfm_req.num_val);
+		esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
+		break;
+	case ESP_BT_GAP_KEY_NOTIF_EVT:
+		ESP_LOGI(TAG, "ESP_BT_GAP_KEY_NOTIF_EVT passkey:%"PRIu32, param->key_notif.passkey);
+		break;
+	case ESP_BT_GAP_KEY_REQ_EVT:
+		ESP_LOGI(TAG, "ESP_BT_GAP_KEY_REQ_EVT Please enter passkey!");
+		break;
 #endif
 
-		case ESP_BT_GAP_MODE_CHG_EVT:
-			ESP_LOGI(TAG, "ESP_BT_GAP_MODE_CHG_EVT mode:%d bda:[%s]", param->mode_chg.mode,
-					 bda2str(param->mode_chg.bda, bda_str, sizeof(bda_str)));
-			break;
+	case ESP_BT_GAP_MODE_CHG_EVT:
+		ESP_LOGI(TAG, "ESP_BT_GAP_MODE_CHG_EVT mode:%d bda:[%s]", param->mode_chg.mode,
+			 bda2str(param->mode_chg.bda, bda_str, sizeof(bda_str)));
+		break;
 
-		default: {
-			ESP_LOGI(TAG, "event: %d", event);
-			break;
-		}
+	default:
+		ESP_LOGI(TAG, "event: %d", event);
+		break;
 	} // end swich
 	return;
 }
