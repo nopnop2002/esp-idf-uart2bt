@@ -1,8 +1,11 @@
-/*
- * SPDX-FileCopyrightText: 2021 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
+/*	BLE SPP Server Example
+
+	This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+	Unless required by applicable law or agreed to in writing, this
+	software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+	CONDITIONS OF ANY KIND, either express or implied.
+*/
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -371,7 +374,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 		}
 		show_bonded_devices();
 
-		cmdBuf.command = CMD_BLUETOOTH_AUTH;
+		cmdBuf.spp_event_id = BLE_AUTH_EVT;
 		xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
 		break;
 	}
@@ -422,13 +425,12 @@ static uint8_t find_char_and_desr_index(uint16_t handle)
 	return error;
 }
 
-static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
-										esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
+static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
 	esp_ble_gatts_cb_param_t *p_data = (esp_ble_gatts_cb_param_t *) param;
 	CMD_t cmdBuf;
 
-	ESP_LOGV(__FUNCTION__, "event = %x\n",event);
+	ESP_LOGI(__FUNCTION__, "event = %d",event);
 	switch (event) {
 		case ESP_GATTS_REG_EVT:
 			esp_ble_gap_set_device_name(DEVICE_NAME);
@@ -445,7 +447,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 			ESP_LOGI(__FUNCTION__, "find_char_and_desr_index=%d", res);
 			if (res == SPP_IDX_SPP_DATA_RECV_VAL) {
 				esp_log_buffer_hex(__FUNCTION__, param->write.value, param->write.len);
-				cmdBuf.command = CMD_BLUETOOTH_DATA;
+				cmdBuf.spp_event_id = BLE_WRITE_EVT;
 				cmdBuf.length = param->write.len;
 				if (cmdBuf.length > PAYLOAD_SIZE) cmdBuf.length = PAYLOAD_SIZE;
 				memcpy(cmdBuf.payload, (char *)param->write.value, cmdBuf.length);
@@ -470,14 +472,14 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 			ESP_LOGI(__FUNCTION__, "ESP_GATTS_CONNECT_EVT");
 			/* start security connect with peer device when receive the connect event sent by the master */
 			esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
-			cmdBuf.command = CMD_BLUETOOTH_CONNECT;
+			cmdBuf.spp_event_id = BLE_CONNECT_EVT;
 			cmdBuf.spp_conn_id = p_data->connect.conn_id;
 			cmdBuf.spp_gatts_if = gatts_if;
 			xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
 			break;
 		case ESP_GATTS_DISCONNECT_EVT:
 			ESP_LOGI(__FUNCTION__, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
-			cmdBuf.command = CMD_BLUETOOTH_DISCONNECT;
+			cmdBuf.spp_event_id = BLE_DISCONNECT_EVT;
 			xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
 			/* start advertising again when missing the connect */
 			esp_ble_gap_start_advertising(&spp_adv_params);
@@ -627,28 +629,23 @@ void spp_task(void * arg)
 
 	while(1){
 		xQueueReceive(xQueueSpp, &cmdBuf, portMAX_DELAY);
-		ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.command=%d connected=%d", cmdBuf.command, connected);
-		if (cmdBuf.command == CMD_BLUETOOTH_CONNECT) {
+		ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.spp_event_id=%d connected=%d", cmdBuf.spp_event_id, connected);
+		if (cmdBuf.spp_event_id == BLE_CONNECT_EVT) {
+			ESP_LOGI(pcTaskGetName(NULL), "BLE_CONNECT_EVT");
 			spp_conn_id = cmdBuf.spp_conn_id;
 			spp_gatts_if = cmdBuf.spp_gatts_if;
-		} else if (cmdBuf.command == CMD_BLUETOOTH_AUTH) {
+		} else if (cmdBuf.spp_event_id == BLE_AUTH_EVT) {
+			ESP_LOGI(pcTaskGetName(NULL), "BLE_AUTH_EVT");
 			connected = true;
-		} else if (cmdBuf.command == CMD_BLUETOOTH_DISCONNECT) {
+		} else if (cmdBuf.spp_event_id == BLE_DISCONNECT_EVT) {
+			ESP_LOGI(pcTaskGetName(NULL), "BLE_DISCONNECT_EVT");
 			connected = false;
-		} else if (cmdBuf.command == CMD_TIMER) {
-			if (connected) {
-				uint8_t	value[64];
-				sprintf((char *)value, "EspressIF\n");
-				uint16_t value_len = strlen((char *)value);
-				ESP_LOGI(pcTaskGetName(0), "value_len=%d", value_len);
-				esp_ble_gatts_send_indicate(spp_gatts_if, spp_conn_id, spp_handle_table[SPP_IDX_SPP_DATA_NOTIFY_VAL], value_len, value, false);
-			}
-		} else if (cmdBuf.command == CMD_UART_DATA) {
+		} else if (cmdBuf.spp_event_id == BLE_UART_EVT) {
 			if (connected) {
 				ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
 				esp_ble_gatts_send_indicate(spp_gatts_if, spp_conn_id, spp_handle_table[SPP_IDX_SPP_DATA_NOTIFY_VAL], cmdBuf.length, cmdBuf.payload, false);
 			}
-		} else if (cmdBuf.command == CMD_BLUETOOTH_DATA) {
+		} else if (cmdBuf.spp_event_id == BLE_WRITE_EVT) {
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
 			xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
 		}

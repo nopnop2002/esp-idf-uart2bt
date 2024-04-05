@@ -1,13 +1,13 @@
 #include "esp_gatts_api.h"
 
-typedef enum {CMD_BLUETOOTH_CONNECT, CMD_BLUETOOTH_AUTH, CMD_BLUETOOTH_DATA, CMD_BLUETOOTH_DISCONNECT, CMD_UART_DATA, CMD_TIMER} COMMAND;
+typedef enum {BLE_CONNECT_EVT, BLE_AUTH_EVT, BLE_WRITE_EVT, BLE_DISCONNECT_EVT, BLE_UART_EVT} COMMAND;
 
 #define PAYLOAD_SIZE 128
 
 typedef struct {
 	uint16_t spp_conn_id;
 	esp_gatt_if_t spp_gatts_if;
-	uint16_t command;
+	uint16_t spp_event_id;
 	size_t length;
 	uint8_t payload[PAYLOAD_SIZE];
 	TaskHandle_t taskHandle;

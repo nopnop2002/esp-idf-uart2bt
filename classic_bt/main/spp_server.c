@@ -1,8 +1,11 @@
-/*
- * SPDX-FileCopyrightText: 2021 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
+/*	Classic Bluetooth SPP Server Example
+
+	This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+	Unless required by applicable law or agreed to in writing, this
+	software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+	CONDITIONS OF ANY KIND, either express or implied.
+*/
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -68,8 +71,8 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 	case ESP_SPP_CLOSE_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_CLOSE_EVT status:%d handle:%"PRIu32" close_by_remote:%d", param->close.status,
 			param->close.handle, param->close.async);
-		cmdBuf.sppHandle = param->data_ind.handle;
-		cmdBuf.command = CMD_BLUETOOTH_CLOSE;
+		cmdBuf.spp_handle = param->data_ind.handle;
+		cmdBuf.spp_event_id = SPP_CLOSE_EVT;
 		xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
 		break;
 	case ESP_SPP_START_EVT:
@@ -88,7 +91,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 	case ESP_SPP_DATA_IND_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_DATA_IND_EVT len:%d handle:%"PRIu32, param->data_ind.len, param->data_ind.handle);
 		esp_log_buffer_hex(__FUNCTION__, param->data_ind.data, param->data_ind.len);
-		cmdBuf.command = CMD_BLUETOOTH_DATA;
+		cmdBuf.spp_event_id = SPP_DATA_IND_EVT;
 		cmdBuf.length = param->data_ind.len;
 		if (cmdBuf.length > PAYLOAD_SIZE) cmdBuf.length = PAYLOAD_SIZE;
 		//strcpy((char *)cmdBuf.payload, (char *)param->data_ind.data);
@@ -100,12 +103,22 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		break;
 	case ESP_SPP_WRITE_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_WRITE_EVT");
+		if (param->write.status != ESP_SPP_SUCCESS) {
+			ESP_LOGE(TAG, "ESP_SPP_WRITE_EVT status:%d", param->write.status);
+			cmdBuf.spp_event_id = SPP_ERROR_EVT;
+			xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		}
+		if (param->write.cong == 1) {
+			ESP_LOGE(TAG, "ESP_SPP_WRITE_EVT cong:%d", param->write.cong);
+			cmdBuf.spp_event_id = SPP_ERROR_EVT;
+			xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		}
 		break;
 	case ESP_SPP_SRV_OPEN_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_SRV_OPEN_EVT status:%d handle:%"PRIu32" rem_bda:[%s]", param->srv_open.status,
 			param->srv_open.handle, bda2str(param->srv_open.rem_bda, bda_str, sizeof(bda_str)));
-		cmdBuf.sppHandle = param->data_ind.handle;
-		cmdBuf.command = CMD_BLUETOOTH_OPEN;
+		cmdBuf.spp_handle = param->data_ind.handle;
+		cmdBuf.spp_event_id = SPP_SRV_OPEN_EVT;
 		xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
 		break;
 	case ESP_SPP_SRV_STOP_EVT:
@@ -258,31 +271,33 @@ void spp_task(void* pvParameters)
 
 	CMD_t cmdBuf;
 	bool connected = false;
-	uint32_t sppHandle = 0;
+	uint32_t spp_handle = 0;
 	while(1) {
 		xQueueReceive(xQueueSpp, &cmdBuf, portMAX_DELAY);
-		ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.command=%d", cmdBuf.command);
-		if (cmdBuf.command == CMD_BLUETOOTH_OPEN) {
+		ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.spp_event_id=%d", cmdBuf.spp_event_id);
+		if (cmdBuf.spp_event_id == SPP_SRV_OPEN_EVT) {
+			ESP_LOGI(pcTaskGetName(NULL), "SPP_SRV_OPEN_EVT");
 			connected = true;
-			sppHandle = cmdBuf.sppHandle;
-		} else if (cmdBuf.command == CMD_BLUETOOTH_CLOSE) {
+			spp_handle = cmdBuf.spp_handle;
+		} else if (cmdBuf.spp_event_id == SPP_CLOSE_EVT) {
+			ESP_LOGI(pcTaskGetName(NULL), "SPP_CLOSE_EVT");
 			connected = false;
-			sppHandle = 0;
-		} else if (cmdBuf.command == CMD_TIMER) {
-			if (connected) {
-				esp_spp_write(sppHandle, cmdBuf.length, cmdBuf.payload);
-			}
-		} else if (cmdBuf.command == CMD_UART_DATA) {
+			spp_handle = 0;
+		} else if (cmdBuf.spp_event_id == SPP_UART_EVT) {
 			if (connected) {
 				ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
-				esp_spp_write(sppHandle, cmdBuf.length, cmdBuf.payload);
+				esp_err_t err = esp_spp_write(spp_handle, cmdBuf.length, cmdBuf.payload);
+				if (err != ESP_OK) {
+					ESP_LOGE(pcTaskGetName(NULL), "esp_spp_write fail");
+				}
 			}
-		} else if (cmdBuf.command == CMD_BLUETOOTH_DATA) {
+		} else if (cmdBuf.spp_event_id == SPP_DATA_IND_EVT) {
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
 			xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
+		} else if (cmdBuf.spp_event_id == SPP_ERROR_EVT) {
+			break;
 		}
 	}
 
-	// Never reach here
 	vTaskDelete(NULL);
 }

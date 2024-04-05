@@ -1,8 +1,11 @@
-/*
- * SPDX-FileCopyrightText: 2021 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
+/*	Classic Bluetooth SPP Server Example
+
+	This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+	Unless required by applicable law or agreed to in writing, this
+	software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+	CONDITIONS OF ANY KIND, either express or implied.
+*/
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -10,7 +13,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "freertos/timers.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "esp_log.h"
@@ -22,18 +24,6 @@ static const char *TAG = "MAIN";
 
 QueueHandle_t xQueueSpp;
 QueueHandle_t xQueueUart;
-TimerHandle_t timerHandle;
-
-// Timer call back for debug
-#if 0
-static void timer_cb(TimerHandle_t xTimer)
-{
-	CMD_t cmdBuf;
-	cmdBuf.command = CMD_TIMER;
-	cmdBuf.length = sprintf((char *)cmdBuf.payload, "Hello World %d\n", xTaskGetTickCount());
-	xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
-}
-#endif
 
 #define RX_BUF_SIZE	128
 
@@ -81,14 +71,17 @@ static void uart_rx_task(void* pvParameters)
 {
 	ESP_LOGI(pcTaskGetName(NULL), "Start using GPIO%d", CONFIG_UART_RX_GPIO);
 	CMD_t cmdBuf;
-	cmdBuf.command = CMD_UART_DATA;
+	cmdBuf.spp_event_id = SPP_UART_EVT;
 	while (1) {
 		cmdBuf.length = uart_read_bytes(UART_NUM_1, cmdBuf.payload, PAYLOAD_SIZE, 10 / portTICK_PERIOD_MS);
 		// There is some rxBuf in rx buffer
 		if (cmdBuf.length > 0) {
 			ESP_LOGD(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
-			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
-			xQueueSend(xQueueSpp, &cmdBuf, portMAX_DELAY);
+			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
+			BaseType_t ret = xQueueSend(xQueueSpp, &cmdBuf, portMAX_DELAY);
+			if (ret != pdTRUE) {
+				ESP_LOGE(pcTaskGetName(NULL), "xQueueSend Fail");
+			}
 			
 		} else {
 			// There is no data in rx buufer
@@ -111,18 +104,6 @@ void app_main(void)
 		ret = nvs_flash_init();
 	}
 	ESP_ERROR_CHECK( ret );
-
-#if 0
-	// create and start timer
-	timerHandle = xTimerCreate("Trigger", 5000/portTICK_PERIOD_MS, pdTRUE, NULL, timer_cb);
-	configASSERT( timerHandle );
-	if (xTimerStart(timerHandle, 0) != pdPASS) {
-		ESP_LOGE(TAG, "Unable to start Timer");
-		while(1) { vTaskDelay(1); }
-	} else {
-		ESP_LOGI(TAG, "Success to start Timer");
-	}
-#endif
 
 	// Create Queue
 	xQueueSpp = xQueueCreate( 10, sizeof(CMD_t) );
