@@ -301,6 +301,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 {
 	ESP_LOGI(__FUNCTION__, "GAP_EVT, event %d", event);
 	CMD_t cmdBuf;
+	BaseType_t err;
 
 	switch (event) {
 	case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
@@ -375,7 +376,10 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 		show_bonded_devices();
 
 		cmdBuf.spp_event_id = BLE_AUTH_EVT;
-		xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		if (err != pdTRUE) {
+			ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+		}
 		break;
 	}
 	case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT: {
@@ -429,6 +433,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 {
 	esp_ble_gatts_cb_param_t *p_data = (esp_ble_gatts_cb_param_t *) param;
 	CMD_t cmdBuf;
+	BaseType_t err;
 
 	ESP_LOGI(__FUNCTION__, "event = %d",event);
 	switch (event) {
@@ -451,7 +456,10 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 				cmdBuf.length = param->write.len;
 				if (cmdBuf.length > PAYLOAD_SIZE) cmdBuf.length = PAYLOAD_SIZE;
 				memcpy(cmdBuf.payload, (char *)param->write.value, cmdBuf.length);
-				xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+				err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+				if (err != pdTRUE) {
+					ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+				}
 			}
 			break;
 		case ESP_GATTS_EXEC_WRITE_EVT:
@@ -475,12 +483,18 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 			cmdBuf.spp_event_id = BLE_CONNECT_EVT;
 			cmdBuf.spp_conn_id = p_data->connect.conn_id;
 			cmdBuf.spp_gatts_if = gatts_if;
-			xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+			err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+			if (err != pdTRUE) {
+				ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+			}
 			break;
 		case ESP_GATTS_DISCONNECT_EVT:
 			ESP_LOGI(__FUNCTION__, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
 			cmdBuf.spp_event_id = BLE_DISCONNECT_EVT;
-			xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+			err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+			if (err != pdTRUE) {
+				ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+			}
 			/* start advertising again when missing the connect */
 			esp_ble_gap_start_advertising(&spp_adv_params);
 			break;
@@ -647,7 +661,10 @@ void spp_task(void * arg)
 			}
 		} else if (cmdBuf.spp_event_id == BLE_WRITE_EVT) {
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
-			xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
+			BaseType_t err = xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
+			if (err != pdTRUE) {
+				ESP_LOGE(pcTaskGetName(NULL), "xQueueSend Fail");
+			}
 		}
 	} // end while
 

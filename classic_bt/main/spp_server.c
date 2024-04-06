@@ -52,6 +52,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
 	char bda_str[18] = {0};
 	CMD_t cmdBuf;
+	BaseType_t err;
 
 	switch (event) {
 	case ESP_SPP_INIT_EVT:
@@ -73,7 +74,10 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 			param->close.handle, param->close.async);
 		cmdBuf.spp_handle = param->data_ind.handle;
 		cmdBuf.spp_event_id = SPP_CLOSE_EVT;
-		xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		if (err != pdTRUE) {
+			ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+		}
 		break;
 	case ESP_SPP_START_EVT:
 		if (param->start.status == ESP_SPP_SUCCESS) {
@@ -96,7 +100,10 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		if (cmdBuf.length > PAYLOAD_SIZE) cmdBuf.length = PAYLOAD_SIZE;
 		//strcpy((char *)cmdBuf.payload, (char *)param->data_ind.data);
 		memcpy(cmdBuf.payload, (char *)param->data_ind.data, cmdBuf.length);
-		xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		if (err != pdTRUE) {
+			ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+		}
 		break;
 	case ESP_SPP_CONG_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_CONG_EVT");
@@ -106,12 +113,18 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		if (param->write.status != ESP_SPP_SUCCESS) {
 			ESP_LOGE(TAG, "ESP_SPP_WRITE_EVT status:%d", param->write.status);
 			cmdBuf.spp_event_id = SPP_ERROR_EVT;
-			xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+			err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+			if (err != pdTRUE) {
+				ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+			}
 		}
 		if (param->write.cong == 1) {
 			ESP_LOGE(TAG, "ESP_SPP_WRITE_EVT cong:%d", param->write.cong);
 			cmdBuf.spp_event_id = SPP_ERROR_EVT;
-			xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+			err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+			if (err != pdTRUE) {
+				ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+			}
 		}
 		break;
 	case ESP_SPP_SRV_OPEN_EVT:
@@ -119,7 +132,10 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 			param->srv_open.handle, bda2str(param->srv_open.rem_bda, bda_str, sizeof(bda_str)));
 		cmdBuf.spp_handle = param->data_ind.handle;
 		cmdBuf.spp_event_id = SPP_SRV_OPEN_EVT;
-		xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
+		if (err != pdTRUE) {
+			ESP_LOGE(TAG, "xQueueSendFromISR Fail");
+		}
 		break;
 	case ESP_SPP_SRV_STOP_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_SRV_STOP_EVT");
@@ -272,6 +288,7 @@ void spp_task(void* pvParameters)
 	CMD_t cmdBuf;
 	bool connected = false;
 	uint32_t spp_handle = 0;
+
 	while(1) {
 		xQueueReceive(xQueueSpp, &cmdBuf, portMAX_DELAY);
 		ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.spp_event_id=%d", cmdBuf.spp_event_id);
@@ -293,7 +310,10 @@ void spp_task(void* pvParameters)
 			}
 		} else if (cmdBuf.spp_event_id == SPP_DATA_IND_EVT) {
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
-			xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
+			BaseType_t err = xQueueSend(xQueueUart, &cmdBuf, portMAX_DELAY);
+			if (err != pdTRUE) {
+				ESP_LOGE(pcTaskGetName(NULL), "xQueueSend Fail");
+			}
 		} else if (cmdBuf.spp_event_id == SPP_ERROR_EVT) {
 			break;
 		}

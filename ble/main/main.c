@@ -78,8 +78,10 @@ static void uart_rx_task(void* pvParameters)
 		if (cmdBuf.length > 0) {
 			ESP_LOGD(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
-			xQueueSend(xQueueSpp, &cmdBuf, portMAX_DELAY);
-			
+			BaseType_t err = xQueueSend(xQueueSpp, &cmdBuf, portMAX_DELAY);
+			if (err != pdTRUE) {
+				ESP_LOGE(pcTaskGetName(NULL), "xQueueSend Fail");
+			}
 		} else {
 			// There is no data in rx buufer
 			//ESP_LOGI(pcTaskGetName(NULL), "Read %d", rxBytes);
