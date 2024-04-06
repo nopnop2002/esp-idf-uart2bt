@@ -76,5 +76,8 @@ void loop() {
 __You can change it to any pin using menuconfig.__   
 
 
-# Install Serial Bluetooth Terminal   
+# Android Application   
 I used [this](https://play.google.com/store/apps/details?id=de.kai_morich.serial_bluetooth_terminal) app.   
+
+# iOS Application   
+[This](https://apps.apple.com/jp/app/bluetooth-v2-1-spp-setup/id6449416841) might work, but I don't have iOS so I don't know.   
