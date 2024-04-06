@@ -32,6 +32,7 @@ idf.py menuconfig
 idf.py flash
 ```
 
+# Configuration
 ![config-top](https://user-images.githubusercontent.com/6020549/173160346-be330c9b-2aef-4d12-8906-9b3b3a4e0225.jpg)
 ![config-uart](https://user-images.githubusercontent.com/6020549/173160343-fcf36ffe-d51e-44bc-a299-8f3e2eb5fe9b.jpg)
 
