@@ -20,5 +20,5 @@ Menu->Devices->Bluetooth LE
 ![ble-2](https://user-images.githubusercontent.com/6020549/184459827-f62dc206-6bc2-41a7-9a88-74b9c84bbb89.JPG)
 
 - Connect to device   
-You can communicate to UNO using android/iphone.   
+You can communicate to UNO using android/iOS.   
 ![ble-3](https://github.com/nopnop2002/esp-idf-uart2bt/assets/6020549/17395b8d-0d11-467e-ae3d-5ffaa785ffda)
