@@ -30,17 +30,7 @@ static const char *TAG = "SPP";
 #define SPP_PROFILE_APP_IDX 0
 #define ESP_SPP_APP_ID 0x56
 
-#ifdef CONFIG_IDF_TARGET_ESP32
-#define DEVICE_NAME "ESP32_SPP_SERVER" //The Device Name Characteristics in GAP
-#elif defined CONFIG_IDF_TARGET_ESP32S3
-#define DEVICE_NAME "ESP32S3_SPP_SERVER" //The Device Name Characteristics in GAP
-#elif defined CONFIG_IDF_TARGET_ESP32C2
-#define DEVICE_NAME "ESP32C2_SPP_SERVER" //The Device Name Characteristics in GAP
-#elif defined CONFIG_IDF_TARGET_ESP32C3
-#define DEVICE_NAME "ESP32C3_SPP_SERVER" //The Device Name Characteristics in GAP
-#elif defined CONFIG_IDF_TARGET_ESP32C6
-#define DEVICE_NAME "ESP32C6_SPP_SERVER" //The Device Name Characteristics in GAP
-#endif
+#define DEVICE_NAME "ESP_SPP_SERVER" //The Device Name Characteristics in GAP
 
 #define SPP_SVC_INST_ID 0
 #define SPP_DATA_MAX_LEN (512)
