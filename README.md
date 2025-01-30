@@ -80,3 +80,11 @@ I used [this](https://play.google.com/store/apps/details?id=de.kai_morich.serial
 
 # iOS Application   
 [This](https://apps.apple.com/jp/app/bluetooth-v2-1-spp-setup/id6449416841) might work, but I don't have iOS so I don't know.   
+
+# References
+
+https://github.com/nopnop2002/esp-idf-web-serial
+
+https://github.com/nopnop2002/esp-idf-uart2udp
+
+https://github.com/nopnop2002/esp-idf-uart2mqtt
