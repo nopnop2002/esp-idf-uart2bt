@@ -12,6 +12,7 @@ Menu->Devices->Bluetooth LE
 ![ble-1](https://github.com/user-attachments/assets/12f2f875-59dc-474d-9aae-711bea2586bb)
 
 - Select Custom and specify UUID   
+The UUIDs are different for ESP-Bluedroid and ESP-NimBLE.   
 ![ble-2](https://user-images.githubusercontent.com/6020549/184459827-f62dc206-6bc2-41a7-9a88-74b9c84bbb89.JPG)
 
 - Connect to device   
