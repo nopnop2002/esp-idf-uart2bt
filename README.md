@@ -21,11 +21,21 @@ idf.py flash
 ```
 
 
-# For ble 4.2 using bluedroid host stack
+# For ble 4.2 using ESP-Bluedroid host stack
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
 cd esp-idf-uart2bt/bluedroid_ble
+idf.py set-target {esp32/esp32s3/esp32c2/esp32c3/esp32c6}
+idf.py menuconfig
+idf.py flash
+```
+
+# For ble 4.2 using ESP-NimBLE host stack
+
+```
+git clone https://github.com/nopnop2002/esp-idf-uart2bt
+cd esp-idf-uart2bt/nimble_ble
 idf.py set-target {esp32/esp32s3/esp32c2/esp32c3/esp32c6}
 idf.py menuconfig
 idf.py flash

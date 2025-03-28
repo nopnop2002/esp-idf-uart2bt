@@ -1,0 +1,42 @@
+menu "Example Configuration"
+
+	config GPIO_RANGE_MAX
+		int
+		default 33 if IDF_TARGET_ESP32
+		default 48 if IDF_TARGET_ESP32S3
+		default 18 if IDF_TARGET_ESP32C2
+		default 19 if IDF_TARGET_ESP32C3
+		default 30 if IDF_TARGET_ESP32C6
+		default 27 if IDF_TARGET_ESP32H2
+
+	config UART_TX_GPIO
+		int "UART TX GPIO number"
+		range 0 GPIO_RANGE_MAX
+		default 17 if IDF_TARGET_ESP32
+		default  2 if IDF_TARGET_ESP32S3
+		default  1 # C3 and others
+		help
+			GPIO number (IOxx) to UART TX.
+			Some GPIOs are used for other purposes (flash connections, etc.).
+			GPIOs 35-39 are input-only so cannot be used as outputs.
+
+	config UART_RX_GPIO
+		int "UART RX GPIO number"
+		range 0 GPIO_RANGE_MAX
+		default 16 if IDF_TARGET_ESP32
+		default  1 if IDF_TARGET_ESP32S3
+		default  0 # C3 and others
+		help
+			GPIO number (IOxx) to UART RX.
+			Some GPIOs are used for other purposes (flash connections, etc.).
+			GPIOs 35-39 are input-only so cannot be used as outputs.
+
+	config UART_BAUD_RATE
+		int "UART communication speed"
+		range 1200 115200
+		default 115200
+		help
+			UART communication speed.
+
+
+endmenu

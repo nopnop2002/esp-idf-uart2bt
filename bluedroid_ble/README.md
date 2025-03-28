@@ -1,4 +1,4 @@
-# For ble 4.2 using bluedroid host stack
+# For ble 4.2 using ESP-Bluedroid host stack
 
 - pair with ESP_SPP_SERVER   
 
