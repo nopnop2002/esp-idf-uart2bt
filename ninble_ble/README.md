@@ -1,4 +1,7 @@
 # For ble 4.2 using ESP-NimBLE host stack
+In ESP-IDF, you can use the ESP-Bluedroid host stack and the ESP-NimBLE host stack.   
+The differences between the two are detailed [here](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/ble/overview.html).   
+This project uses the ESP-NimBLE host stack.   
 
 - pair with ESP_NIMBLE_SERVER   
 
