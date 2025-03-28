@@ -10,7 +10,7 @@ ESP-IDF V5.0 or later.
 ESP-IDF V4.4 release branch reached EOL in July 2024.   
 
 
-# Using classic bluetooth (ESP32 only)
+# For classic bluetooth (ESP32 only)
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
@@ -21,11 +21,11 @@ idf.py flash
 ```
 
 
-# Using ble 4.2
+# For ble 4.2 using bluedroid host stack
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
-cd esp-idf-uart2bt/ble
+cd esp-idf-uart2bt/bluedroid_ble
 idf.py set-target {esp32/esp32s3/esp32c2/esp32c3/esp32c6}
 idf.py menuconfig
 idf.py flash

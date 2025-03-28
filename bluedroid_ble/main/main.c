@@ -18,16 +18,17 @@
 #include "esp_log.h"
 #include "driver/uart.h"
 
-#include "cmd.h"
+#include "spp.h"
 
 static const char *TAG = "MAIN";
 
 QueueHandle_t xQueueSpp;
 QueueHandle_t xQueueUart;
 
-#define RX_BUF_SIZE	128
+#define RX_BUF_SIZE 128
 
-void uart_init(void) {
+static void uart_init(void)
+{
 	const uart_config_t uart_config = {
 		//.baud_rate = 115200,
 		.baud_rate = CONFIG_UART_BAUD_RATE,
@@ -92,11 +93,12 @@ static void uart_rx_task(void* pvParameters)
 	vTaskDelete(NULL);
 }
 
-void spp_task(void * arg);
+void bluedroid_spp_task(void * pvParameters);
 
 void app_main(void)
 {
-	// Initialize NVS.
+	// Initialize NVS
+	// It is used to store PHY calibration data
 	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
 		ESP_ERROR_CHECK(nvs_flash_erase());
@@ -110,11 +112,11 @@ void app_main(void)
 	xQueueUart = xQueueCreate( 10, sizeof(CMD_t) );
 	configASSERT( xQueueUart );
 
-	// uart initialize
+	// Initialize UART
 	uart_init();
 
 	// Start tasks
 	xTaskCreate(uart_tx_task, "UART-TX", 1024*4, NULL, 2, NULL);
 	xTaskCreate(uart_rx_task, "UART-RX", 1024*4, NULL, 2, NULL);
-	xTaskCreate(spp_task, "SPP", 1024*4, NULL, 2, NULL);
+	xTaskCreate(bluedroid_spp_task, "BLE_SPP", 1024*4, NULL, 2, NULL);
 }
