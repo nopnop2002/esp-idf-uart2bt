@@ -80,6 +80,7 @@ I (1189799) UART-RX: 0x3ffc8468   0d 0a
 ```
 
 The string output to UART must be terminated with LF(0x0a).  
+If the string output to the UART is not terminated with LF(0x0a), the Arduino will complete the input with a timeout.   
 The string output to the UART is echoed back.   
 ```
 I (1285439) UART-TX: 0x3ffc72f8   61 62 63 64 65 66 67 0a                           |abcdefg.|
