@@ -75,8 +75,8 @@ void loop() {
 
 The string input from UART is terminated with CR(0x0d)+LF(0x0a).   
 ```
-I (895939) UART-RX: 0x3ffc8458   48 65 6c 6c 6f 20 57 6f  72 6c 64 20 34 36 38 34  |Hello World 4684|
-I (895939) UART-RX: 0x3ffc8468   30 30 30 0d 0a                                    |000..|
+I (1189799) UART-RX: 0x3ffc8458   48 65 6c 6c 6f 20 57 6f  72 6c 64 20 31 30 30 31  |Hello World 1001|
+I (1189799) UART-RX: 0x3ffc8468   0d 0a
 ```
 
 The string output to UART must be terminated with LF(0x0a).  
