@@ -73,6 +73,16 @@ void loop() {
 }
 ```
 
+The string input from UART is terminated with CR(0x0d)+LF(0x0a).   
+```
+I (895939) UART-RX: 0x3ffc8458   48 65 6c 6c 6f 20 57 6f  72 6c 64 20 34 36 38 34  |Hello World 4684|
+I (895939) UART-RX: 0x3ffc8468   30 30 30 0d 0a                                    |000..|
+```
+
+The string output to UART must be terminated with LF(0x0a).  
+```
+(1005999) UART-TX: 0x3ffc72f8   61 62 63 64 65 66 67 0a                           |abcdefg.|
+```
 
 # Connect ESP32 and AtMega328 using wire cable   
 
