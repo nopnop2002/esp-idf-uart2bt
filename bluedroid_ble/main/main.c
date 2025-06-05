@@ -1,4 +1,4 @@
-/*	BLE SPP Server Example
+/*	ESP-Bluedroid SPP Server Example
 
 	This example code is in the Public Domain (or CC0 licensed, at your option.)
 
@@ -78,7 +78,7 @@ static void uart_rx_task(void* pvParameters)
 		// There is some rxBuf in rx buffer
 		if (cmdBuf.length > 0) {
 			ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
-			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
+			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
 			BaseType_t err = xQueueSend(xQueueSpp, &cmdBuf, portMAX_DELAY);
 			if (err != pdTRUE) {
 				ESP_LOGE(pcTaskGetName(NULL), "xQueueSend Fail");

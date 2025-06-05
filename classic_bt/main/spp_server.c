@@ -21,7 +21,7 @@
 #include "esp_bt_device.h"
 #include "esp_spp_api.h"
 
-#include "cmd.h"
+#include "spp.h"
 
 static const char *TAG = "SPP";
 
@@ -98,12 +98,21 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		break;
 	case ESP_SPP_DATA_IND_EVT:
 		ESP_LOGI(TAG, "ESP_SPP_DATA_IND_EVT len:%d handle:%"PRIu32, param->data_ind.len, param->data_ind.handle);
-		esp_log_buffer_hex(__FUNCTION__, param->data_ind.data, param->data_ind.len);
+		ESP_LOG_BUFFER_HEXDUMP(__FUNCTION__, param->data_ind.data, param->data_ind.len, ESP_LOG_INFO);
+
+		/*
+		[61 62 63 64 65 66 67 0d 0a] to [61 62 63 64 65 66 67 0a]
+		*/
 		cmdBuf.spp_event_id = SPP_DATA_IND_EVT;
-		cmdBuf.length = param->data_ind.len;
-		if (cmdBuf.length > PAYLOAD_SIZE) cmdBuf.length = PAYLOAD_SIZE;
-		//strcpy((char *)cmdBuf.payload, (char *)param->data_ind.data);
-		memcpy(cmdBuf.payload, (char *)param->data_ind.data, cmdBuf.length);
+		cmdBuf.length = 0;
+		for (int i=0;i<param->data_ind.len;i++) {
+			if (param->data_ind.data[i] == 0x0d) continue;
+			if (cmdBuf.length < PAYLOAD_SIZE) {
+				cmdBuf.payload[cmdBuf.length] = param->data_ind.data[i];
+				cmdBuf.length++;
+			}
+		}
+		ESP_LOG_BUFFER_HEXDUMP(__FUNCTION__, cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
 		err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
 		if (err != pdTRUE) {
 			ESP_LOGE(TAG, "xQueueSendFromISR Fail");
@@ -182,7 +191,7 @@ void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 		}
 		break;
 
-#if (CONFIG_BT_SSP_ENABLED == true)
+#if (CONFIG_EXAMPLE_SSP_ENABLED == true)
 	case ESP_BT_GAP_CFM_REQ_EVT:
 		ESP_LOGI(TAG, "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value:%"PRIu32, param->cfm_req.num_val);
 		esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
@@ -228,7 +237,7 @@ void spp_task(void* pvParameters)
 
 #if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0))
 	esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
-#if (CONFIG_BT_SSP_ENABLED == true)
+#if (CONFIG_EXAMPLE_SSP_ENABLED == true)
 	bluedroid_cfg.ssp_en = false;
 #endif
 	if ((ret = esp_bluedroid_init_with_cfg(&bluedroid_cfg)) != ESP_OK) {
@@ -272,7 +281,7 @@ void spp_task(void* pvParameters)
 		return;
 	}
 
-#if (CONFIG_BT_SSP_ENABLED == true)
+#if (CONFIG_EXAMPLE_SSP_ENABLED == true)
 	/* Set default parameters for Secure Simple Pairing */
 	esp_bt_sp_param_t param_type = ESP_BT_SP_IOCAP_MODE;
 	esp_bt_io_cap_t iocap = ESP_BT_IO_CAP_IO;

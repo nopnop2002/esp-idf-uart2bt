@@ -18,7 +18,7 @@
 #include "esp_log.h"
 #include "driver/uart.h"
 
-#include "cmd.h"
+#include "spp.h"
 
 static const char *TAG = "MAIN";
 
