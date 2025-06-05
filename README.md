@@ -82,7 +82,7 @@ I (1189799) UART-RX: 0x3ffc8468   0d 0a
 The string output to UART must be terminated with LF(0x0a).  
 If the string output to the UART is not terminated with LF(0x0a), the Arduino will complete the input with a timeout.   
 The default input timeout is 1000 milliseconds.   
-The string output to the UART is echoed back.   
+The string output to the UART is echoed back with CR(0x0d)+LF(0x0a).   
 ```
 I (1285439) UART-TX: 0x3ffc72f8   61 62 63 64 65 66 67 0a                           |abcdefg.|
 I (1285459) UART-RX: 0x3ffc8458   61 62 63 64 65 66 67 0d  0a                       |abcdefg..|
