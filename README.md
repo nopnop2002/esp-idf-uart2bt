@@ -80,8 +80,10 @@ I (1189799) UART-RX: 0x3ffc8468   0d 0a
 ```
 
 The string output to UART must be terminated with LF(0x0a).  
+The string output to the UART is echoed back.   
 ```
-(1005999) UART-TX: 0x3ffc72f8   61 62 63 64 65 66 67 0a                           |abcdefg.|
+I (1285439) UART-TX: 0x3ffc72f8   61 62 63 64 65 66 67 0a                           |abcdefg.|
+I (1285459) UART-RX: 0x3ffc8458   61 62 63 64 65 66 67 0d  0a                       |abcdefg..|
 ```
 
 # Connect ESP32 and AtMega328 using wire cable   
