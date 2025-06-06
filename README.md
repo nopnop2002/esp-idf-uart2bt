@@ -73,16 +73,20 @@ void loop() {
 }
 ```
 
-The string input from UART is terminated with CR(0x0d)+LF(0x0a).   
+Strings from Arduino to ESP32 are terminated with CR(0x0d)+LF(0x0a).   
 ```
 I (1189799) UART-RX: 0x3ffc8458   48 65 6c 6c 6f 20 57 6f  72 6c 64 20 31 30 30 31  |Hello World 1001|
 I (1189799) UART-RX: 0x3ffc8468   0d 0a
 ```
 
-The string output to UART must be terminated with LF(0x0a).  
-If the string output to the UART is not terminated with LF(0x0a), the Arduino will complete the input with a timeout.   
-The default input timeout is 1000 milliseconds.   
-The string output to the UART is echoed back with CR+LF as the terminator.   
+The Arduino sketch inputs data with LF as the terminator.   
+So strings from the ESP32 to the Arduino must be terminated with LF (0x0a).   
+If the string output from the ESP32 to the Arduino is not terminated with LF (0x0a), the Arduino sketch will complete the input with a timeout.   
+The default input timeout for Arduino sketches is 1000 milliseconds.   
+The ESP32 SPP driver always sends data to the application with CR+LF as the termination character.   
+This project changes the termination character from CR+LF to LF and sends the data to Arduino.   
+The Arduino sketch will echo back the string it reads.   
+
 ```
 I (1285439) UART-TX: 0x3ffc72f8   61 62 63 64 65 66 67 0a                           |abcdefg.|
 I (1285459) UART-RX: 0x3ffc8458   61 62 63 64 65 66 67 0d  0a                       |abcdefg..|
