@@ -111,7 +111,7 @@ I used [this](https://play.google.com/store/apps/details?id=de.kai_morich.serial
 
 # References
 
-https://github.com/nopnop2002/esp-idf-web-serial
+https://github.com/nopnop2002/esp-idf-uart2web
 
 https://github.com/nopnop2002/esp-idf-uart2udp
 
