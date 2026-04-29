@@ -3,7 +3,7 @@ UART to Bluetooth bridge for ESP-IDF.
 
 ![Android-2](https://user-images.githubusercontent.com/6020549/173160564-4790a2cf-d084-400e-9a75-89cc2655f12e.JPG)
 
-![urt2bt](https://user-images.githubusercontent.com/6020549/173161730-496501d3-163b-4e58-bb5b-f2fdfaa7854a.jpg)
+<img width="960" height="720" alt="Image" src="https://github.com/user-attachments/assets/3fc72c78-787b-4821-9733-e2fb1b8a03fc" />
 
 # Software requirements
 ESP-IDF V5.0 or later.   
