@@ -24,4 +24,5 @@ You can communicate to UNO using android.
 Unlike ESP-Bluedroid host stack, ESP-NimBLE host stack allows concurrent connections.   
 The maximum number of simultaneous connections is specified here.   
 ![Image](https://github.com/user-attachments/assets/9d1e1182-ed41-4b9e-bc55-bb3c75dd4745)   
+You can communicate to UNO using multiple Android devices.   
 ![Image](https://github.com/user-attachments/assets/4d84823a-69c4-48bf-9671-64644f048ccd)   
