@@ -296,7 +296,7 @@ static int ble_svc_gatt_handler(uint16_t conn_handle, uint16_t attr_handle, stru
 		}
 		ESP_LOG_BUFFER_HEXDUMP(__FUNCTION__, cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
 		BaseType_t err = xQueueSendFromISR(xQueueUart, &cmdBuf, NULL);
-		if (err != pdTRUE) {
+		if (err != pdPASS) {
 			ESP_LOGE(__FUNCTION__, "xQueueSendFromISR Fail");
 		}
 		break;
@@ -385,7 +385,7 @@ int gatt_svr_init(void)
 
 void nimble_spp_task(void * pvParameters)
 {
-	ESP_LOGI(pcTaskGetName(0), "Start");
+	ESP_LOGI(pcTaskGetName(NULL), "Start");
 	esp_err_t ret = nimble_port_init();
 	if (ret != ESP_OK) {
 		ESP_LOGE(pcTaskGetName(NULL), "Failed to init nimble %d \n", ret);
@@ -440,7 +440,7 @@ void nimble_spp_task(void * pvParameters)
 	while(1){
 		xQueueReceive(xQueueSpp, &cmdBuf, portMAX_DELAY);
 		ESP_LOGI(pcTaskGetName(NULL), "cmdBuf.spp_event_id=%d", cmdBuf.spp_event_id);
-		if (cmdBuf.spp_event_id == BLE_UART_EVT) {
+		if (cmdBuf.spp_event_id == SPP_UART_EVT) {
 
 			for (int i = 0; i <= CONFIG_BT_NIMBLE_MAX_CONNECTIONS; i++) {
 				/* Check if client has subscribed to notifications */
