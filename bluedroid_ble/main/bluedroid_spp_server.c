@@ -367,7 +367,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 
 		cmdBuf.spp_event_id = BLE_AUTH_EVT;
 		err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
-		if (err != pdTRUE) {
+		if (err != pdPASS) {
 			ESP_LOGE(__FUNCTION__, "xQueueSendFromISR Fail");
 		}
 		break;
@@ -447,7 +447,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 				if (cmdBuf.length > PAYLOAD_SIZE) cmdBuf.length = PAYLOAD_SIZE;
 				memcpy(cmdBuf.payload, (char *)param->write.value, cmdBuf.length);
 				err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
-				if (err != pdTRUE) {
+				if (err != pdPASS) {
 					ESP_LOGE(__FUNCTION__, "xQueueSendFromISR Fail");
 				}
 			}
@@ -474,7 +474,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 			cmdBuf.spp_conn_id = p_data->connect.conn_id;
 			cmdBuf.spp_gatts_if = gatts_if;
 			err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
-			if (err != pdTRUE) {
+			if (err != pdPASS) {
 				ESP_LOGE(__FUNCTION__, "xQueueSendFromISR Fail");
 			}
 			break;
@@ -482,7 +482,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 			ESP_LOGI(__FUNCTION__, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
 			cmdBuf.spp_event_id = BLE_DISCONNECT_EVT;
 			err = xQueueSendFromISR(xQueueSpp, &cmdBuf, NULL);
-			if (err != pdTRUE) {
+			if (err != pdPASS) {
 				ESP_LOGE(__FUNCTION__, "xQueueSendFromISR Fail");
 			}
 			/* start advertising again when missing the connect */
@@ -517,8 +517,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 }
 
 
-static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if,
-								esp_ble_gatts_cb_param_t *param)
+static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
 	/* If event is register event, store the gatts_if for each profile */
 	if (event == ESP_GATTS_REG_EVT) {
@@ -547,52 +546,52 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 void bluedroid_spp_task(void * pvParameters)
 {
-	ESP_LOGI(pcTaskGetName(0), "Start");
+	ESP_LOGI(pcTaskGetName(NULL), "Start");
 
 	ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
 	esp_err_t ret;
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 	if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK) {
-		ESP_LOGE(pcTaskGetName(0), "%s init controller failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(pcTaskGetName(NULL), "%s init controller failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 
 	if ((ret = esp_bt_controller_enable(ESP_BT_MODE_BLE)) != ESP_OK) {
-		ESP_LOGE(pcTaskGetName(0), "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(pcTaskGetName(NULL), "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 
 #if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0))
 	esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
 	if ((ret = esp_bluedroid_init_with_cfg(&bluedroid_cfg)) != ESP_OK) {
-		ESP_LOGE(pcTaskGetName(0), "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(pcTaskGetName(NULL), "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 #else
 	if ((ret = esp_bluedroid_init()) != ESP_OK) {
-		ESP_LOGE(pcTaskGetName(0), "%s init bluedroid failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(pcTaskGetName(NULL), "%s init bluedroid failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 #endif
 
 	if ((ret = esp_bluedroid_enable()) != ESP_OK) {
-		ESP_LOGE(pcTaskGetName(0), "%s enable bluetooth failed: %s", __func__, esp_err_to_name(ret));
+		ESP_LOGE(pcTaskGetName(NULL), "%s enable bluetooth failed: %s", __func__, esp_err_to_name(ret));
 		return;
 	}
 
 	if ((ret = esp_ble_gatts_register_callback(gatts_event_handler)) != ESP_OK) {
-		ESP_LOGE(pcTaskGetName(0), "gatts register error, error code = %x", ret);
+		ESP_LOGE(pcTaskGetName(NULL), "gatts register error, error code = %x", ret);
 		return;
 	}
 
 	if ((ret = esp_ble_gap_register_callback(gap_event_handler)) != ESP_OK) {
-		ESP_LOGE(pcTaskGetName(0), "gap register error, error code = %x", ret);
+		ESP_LOGE(pcTaskGetName(NULL), "gap register error, error code = %x", ret);
 		return;
 	}
 
 	if ((ret = esp_ble_gatts_app_register(ESP_SPP_APP_ID)) != ESP_OK) {
-		ESP_LOGE(pcTaskGetName(0), "gatts app register error, error code = %x", ret);
+		ESP_LOGE(pcTaskGetName(NULL), "gatts app register error, error code = %x", ret);
 		return;
 	}
 
@@ -644,7 +643,7 @@ void bluedroid_spp_task(void * pvParameters)
 		} else if (cmdBuf.spp_event_id == BLE_DISCONNECT_EVT) {
 			ESP_LOGI(pcTaskGetName(NULL), "BLE_DISCONNECT_EVT");
 			connected = false;
-		} else if (cmdBuf.spp_event_id == BLE_UART_EVT) {
+		} else if (cmdBuf.spp_event_id == SPP_UART_EVT) {
 			if (connected) {
 				ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_DEBUG);
 				esp_ble_gatts_send_indicate(spp_gatts_if, spp_conn_id, spp_handle_table[SPP_IDX_SPP_DATA_NOTIFY_VAL], cmdBuf.length, cmdBuf.payload, false);
@@ -667,7 +666,7 @@ void bluedroid_spp_task(void * pvParameters)
 			}
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf2.payload, cmdBuf2.length, ESP_LOG_INFO);
 			BaseType_t err = xQueueSend(xQueueUart, &cmdBuf2, portMAX_DELAY);
-			if (err != pdTRUE) {
+			if (err != pdPASS) {
 				ESP_LOGE(pcTaskGetName(NULL), "xQueueSend Fail");
 			}
 		}
