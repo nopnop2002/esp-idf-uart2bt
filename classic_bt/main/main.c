@@ -79,7 +79,7 @@ static void uart_rx_task(void* pvParameters)
 			ESP_LOGD(pcTaskGetName(NULL), "cmdBuf.length=%d", cmdBuf.length);
 			ESP_LOG_BUFFER_HEXDUMP(pcTaskGetName(NULL), cmdBuf.payload, cmdBuf.length, ESP_LOG_INFO);
 			BaseType_t ret = xQueueSend(xQueueSpp, &cmdBuf, portMAX_DELAY);
-			if (ret != pdTRUE) {
+			if (ret != pdPASS) {
 				ESP_LOGE(pcTaskGetName(NULL), "xQueueSend Fail");
 			}
 			
