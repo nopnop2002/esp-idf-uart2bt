@@ -16,7 +16,7 @@ You can communicate to UNO using android.
 ## Using Windows10/11   
 - Attach the USB Bluetooth dongle   
 
-- Open Settigs -> Devices   
+- Open Settings -> Devices   
 	Click Add bluetooth or other device.   
 	<img width="1138" height="675" alt="Image" src="https://github.com/user-attachments/assets/19a13249-f87a-4a13-bdbe-68c9d64364f9" />
 
