@@ -80,7 +80,7 @@ You can communicate to UNO using android.
 	```
 	$ screen /dev/rfcomm0
 	```
-	<img width="659" height="486" alt="Image" src="https://github.com/user-attachments/assets/f4f7c64b-4cf6-4a44-99cb-ff8d1c280ce2" />
+	<img width="820" height="517" alt="Image" src="https://github.com/user-attachments/assets/89ec9c0f-8da1-49dd-ba5b-ce5d01fed989" />
 
 - Remove serial device after use   
 	```
