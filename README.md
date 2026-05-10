@@ -26,7 +26,6 @@ idf.py flash
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
 cd esp-idf-uart2bt/bluedroid_ble
-idf.py set-target {esp32/esp32s3/esp32c2/esp32c3/esp32c6}
 idf.py menuconfig
 idf.py flash
 ```
@@ -36,7 +35,6 @@ idf.py flash
 ```
 git clone https://github.com/nopnop2002/esp-idf-uart2bt
 cd esp-idf-uart2bt/nimble_ble
-idf.py set-target {esp32/esp32s3/esp32c2/esp32c3/esp32c6}
 idf.py menuconfig
 idf.py flash
 ```
@@ -94,7 +92,7 @@ I (1285459) UART-RX: 0x3ffc8458   61 62 63 64 65 66 67 0d  0a                   
 
 # Connect ESP32 and AtMega328 using wire cable   
 
-|AtMega328||ESP32|ESP32S3|ESP32C2/C3/C6||
+|AtMega328||ESP32|ESP32S3|ESP32Cx/Hx||
 |:-:|:-:|:-:|:-:|:-:|:-:|
 |TX|--|GPIO16|GPIO2|GPIO1|(*1)|
 |RX|--|GPIO17|GPIO1|GPIO0||
